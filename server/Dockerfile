@@ -21,9 +21,8 @@ RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN pip3 install pip==20.3.4
-RUN pip3 install setuptools
+RUN pip3 install setuptools==50.3.1
 RUN pip3 install wheel
-RUN pip3 install setuptools-scm==5.0.2
 
 COPY requirements.txt .
 
