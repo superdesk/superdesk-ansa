@@ -1,0 +1,87 @@
+<div id="ansa-related-widget" ng-controller="AnsaRelatedCtrl as related">
+    <div class="sd-searchbar sd-searchbar--border-bottom sd-searchbar--small" ng-class="{'sd-searchbar--focused': focused}">
+        <label for="search-input" class="sd-searchbar__icon"></label>
+        <input id="search-input"
+                class="sd-searchbar__input"
+                type="text"
+                placeholder="{{ 'Search'|translate }}"
+                ng-model="related.query"
+                ng-focus="focused = true"
+                ng-keyup="related.searchOnEnter($event)"
+                tabindex="1">
+    </div>
+    <div class="widget" sd-loading="!related.items">
+        <ul class="simple-list simple-list--comfortable simple-list--dotted simple-list--no-padding" sd-loading="!related.items">
+            <li ng-repeat="item in related.items track by $index"
+                class="simple-list__item" ng-if="item.type === 'picture'" sd-draggable-item>
+                <div class="basic item-block">
+                    <i sd-filetype-icon data-item="item"></i>
+                    <span class="keyword" ng-click="isCollapsed = !isCollapsed">{{ item.headline }}</span>
+                    <div class="headline"><time sd-datetime data-date="item.versioncreated"></time></div>
+                    <div class="collapsed-content">
+                        <div sd-item-rendition data-item="item" data-rendition="thumbnail"></div>
+                        <div ng-if="related.allowAddMedia() && contentProfile != null" class="set-related-btn-group">
+                            <button
+                                ng-if="contentProfile.schema.hasOwnProperty(featureMediaField)"
+                                class="btn btn--small"
+                                ng-click="related.setFeatured(item)"
+                                translate
+                            >
+                                Set as Featured
+                            </button>
+
+                            <button
+                                ng-if="contentProfile.schema.hasOwnProperty(galleryField)"
+                                class="btn btn--small"
+                                ng-click="related.addToGallery(item)"
+                                translate
+                            >
+                                Add to Gallery
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </li>
+            <li ng-repeat="item in related.items track by $index"
+                class="simple-list__item" ng-if="item.type !== 'picture'" ng-init="isCollapsed = item.type === 'text'">
+                <div class="basic item-block">
+                    <i sd-filetype-icon data-item="item"></i>
+                    <span class="keyword" ng-click="isCollapsed = !isCollapsed">{{ item.headline }}</span>
+                    <div class="headline"><time sd-datetime data-date="item.versioncreated"></time></div>
+                    <div class="collapsed-content">
+                        <div ng-if="item.body_html && item.type !== 'picture'" ng-hide="isCollapsed">
+                            <div sd-html-preview="item.body_html"></div>
+                        </div>
+                    </div>
+                </div>
+            </li>
+            <li ng-if="related.items.length === 0">
+                <p ></p>
+                <div class="panel-info">
+                    <div class="panel-info__icon">
+                        <i class="big-icon--info"></i>
+                    </div>
+                    <h3 class="panel-info__heading" translate>Not found.</h3>
+                </div>
+            </li>
+        </ul>
+        <div class="button-list">
+            <button class="toggle-button"
+                ng-click="related.filter('text')"
+                ng-class="{'toggle-button--active': related.activeFilter == 'text'}" sd-tooltip="{{ :: 'Text' | translate}}" flow="down">
+                <i class="toggle-button__icon filetype-icon-text"></i>
+                
+            </button>
+            <button class="toggle-button"
+                ng-click="related.filter('picture')"
+                ng-class="{'toggle-button--active': related.activeFilter == 'picture'}" sd-tooltip="{{ :: 'Pictures' | translate}}" flow="down">
+                <i class="toggle-button__icon filetype-icon-picture"></i>
+            </button>
+            <button class="toggle-button"
+                ng-click="related.filter('video')"
+                ng-class="{'toggle-button--active': related.activeFilter == 'video'}" sd-tooltip="{{ :: 'Video' | translate}}" flow="down">
+                <i class="toggle-button__icon filetype-icon-video"></i>
+            </button>
+        </div>
+    </div>
+</div>

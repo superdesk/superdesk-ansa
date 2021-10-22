@@ -1,0 +1,226 @@
+{
+    "editor": {
+        "slugline": {
+            "order": 1,
+            "sdWidth": "full",
+            "section": "header"
+        },
+        "language": {
+            "order": 2,
+            "sdWidth": "half",
+            "section": "header"
+        },
+        "PhotoCategories": {
+            "order": 3,
+            "sdWidth": "half",
+            "section": "header",
+            "required": true
+        },
+        "subject": {
+            "order": 4,
+            "sdWidth": "full",
+            "section": "header"
+        },
+        "products": {
+            "order": 5,
+            "sdWidth": "full",
+            "section": "header",
+            "preview": true,
+            "required": true
+        },
+        "city": {
+            "order": 6,
+            "sdWidth": "half",
+            "section": "header"
+        },
+        "nation": {
+            "order": 7,
+            "sdWidth": "half",
+            "section": "header"
+        },
+        "ednote": {
+            "order": 8,
+            "sdWidth": "full",
+            "textarea": true,
+            "section": "content"
+        },
+        "headline": {
+            "order": 9,
+            "sdWidth": "full",
+            "section": "content",
+            "textarea": true
+        },
+        "description_text": {
+            "order": 10,
+            "sdWidth": "full",
+            "textarea": true,
+            "section": "content"
+        },
+        "sign_off": {
+            "order": 13,
+            "sdWidth": "full",
+            "section": "content"
+        },
+        "byline": {
+            "order": 12,
+            "sdWidth": "full",
+            "section": "content"
+        },
+        "digitator": {
+            "order": 14,
+            "sdWidth": "full",
+            "section": "content"
+        },
+        "coauthor": {
+            "order": 11,
+            "sdWidth": "full",
+            "section": "content"
+        },
+        "supplier": {
+            "order": 15,
+            "sdWidth": "full",
+            "section": "content"
+        },
+        "copyrightholder": {
+            "order": 16,
+            "sdWidth": "full",
+            "textarea": true,
+            "section": "content"
+        },
+        "usageterms": {
+            "order": 17,
+            "sdWidth": "full",
+            "textarea": true,
+            "section": "content"
+        },
+        "alt_text": {
+            "order": 18,
+            "sdWidth": "full",
+            "textarea": true,
+            "section": "content"
+        }
+    },
+    "schema": {
+        "slugline": {
+            "type": "string",
+            "required": false,
+            "nullable": true
+        },
+        "language": {
+            "type": "string",
+            "enabled": true,
+            "nullable": false,
+            "required": true,
+            "default": "it"
+        },
+        "subject": {
+            "default": [],
+            "type": "list",
+            "nullable": true,
+            "mandatory_in_list": {
+                "scheme": {
+                   "PhotoCategories": "PhotoCategories",
+                   "products": "products"
+                }
+            },
+            "required": false,
+            "schema": {
+                "type": "dict",
+                "schema": {
+                    "service": {
+                        "nullable": true
+                    },
+                    "scheme": {
+                        "allowed": ["products", "PhotoCategories", "FIEG_Categories"],
+                        "type": "string",
+                        "nullable": true,
+                        "required": true
+                    },
+                    "qcode": {},
+                    "parent": {
+                        "nullable": true
+                    },
+                    "name": {}
+                }
+            }
+        },
+        "city": {
+            "type": "text",
+            "enabled": true,
+            "nullable": true,
+            "required": true
+        },
+        "nation": {
+            "type": "text",
+            "enabled": true,
+            "nullable": true,
+            "required": false
+        },
+        "ednote": {
+            "type": "string",
+            "required": false,
+            "nullable": true
+        },
+        "headline": {
+            "type": "string",
+            "required": true,
+            "nullable": true
+        },
+        "description_text": {
+            "type": "string",
+            "nullable": true,
+            "required": true
+        },
+        "sign_off": {
+            "enabled": true,
+            "type": "string",
+            "nullable": true,
+            "required": false
+        },
+        "byline": {
+            "type": "string",
+            "required": true,
+            "nullable": true
+        },
+        "digitator": {
+            "enabled": true,
+            "type": "text",
+            "nullable": true,
+            "required": false
+        },
+        "coauthor": {
+            "enabled": true,
+            "type": "text",
+            "nullable": true,
+            "required": true
+        },
+        "supplier": {
+            "enabled": true,
+            "type": "text",
+            "nullable": true,
+            "required": false,
+            "default": "ANSA"
+        },
+        "copyrightholder": {
+            "type": "string",
+            "nullable": true,
+            "required": false
+        },
+        "copyrightnotice": {
+            "type": "string",
+            "enabled": true,
+            "nullable": true,
+            "required": false
+        },
+        "usageterms": {
+            "type": "string",
+            "nullable": true,
+            "required": false
+        },
+        "alt_text": {
+            "type": "string",
+            "nullable": true,
+            "required": false
+        }
+    }
+}

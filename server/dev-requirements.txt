@@ -1,0 +1,9 @@
+-r requirements.txt
+
+flake8
+pep8
+nose
+httmock
+wooper
+requests_mock==1.5.2
+mypy

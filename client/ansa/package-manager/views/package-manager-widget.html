@@ -1,0 +1,37 @@
+<div ng-controller="PackageManagerWidgetCtrl as ctrl">
+    <div class="sd-searchbar sd-searchbar--border-bottom sd-searchbar--small" ng-class="{'sd-searchbar--focused': focused}">
+        <label for="search-input" class="sd-searchbar__icon"></label>
+        <input id="search-input"
+                class="sd-searchbar__input"
+                type="text"
+                placeholder="{{ 'Search'|translate }}"
+                ng-model="query"
+                ng-focus="focused = true"
+                tabindex="1">
+    </div>
+    <div class="package-manager-content" sd-loading="ctrl.loading">
+        <ul class="ingest-list simple-list simple-list--dotted">
+            <li class="simple-list__item" ng-repeat="pitem in contentItems | filter: query track by pitem._id" ng-if="pitem._id !== item._id" title="{{ pitem.headline || pitem.slugline}}">
+                <div class="item-block item-block--basic">
+                    <i class="filetype-icon-composite"></i>
+                    <div class="content" ng-click="showPreview = !showPreview">
+                        <span class="headline" ng-show="pitem.headline || pitem.slugline">
+                            {{ pitem.headline || pitem.slugline | uppercase}}
+                        </span>
+                        <span class="headline" ng-hide="pitem.headline || pitem.slugline" translate>Blank headline received</span>
+                    </div>
+                    <div class="content-item__action dropdown" dropdown-append-to-body dropdown>
+                        <button class="dropdown__toggle" dropdown__toggle><i class="icon-dots-vertical"></i></button>
+                        <ul class="dropdown__menu more-activity-menu">
+                            <li ng-repeat="group in groupList">
+                                <button ng-click="ctrl.addToPackage(pitem, group)">{{group}}</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div sd-package data-item="pitem" ng-show="showPreview" style="padding: 8px 0 0 0;"></div>
+            </li>
+        </ul>
+    </div>
+    <div sd-package-manager-modal data-item="item" data-active="packageModal"></div>
+</div>

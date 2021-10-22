@@ -1,0 +1,7 @@
+.env
+.git
+env
+start_container.sh
+.vagrant
+*.pyc
+**/__pycache__
