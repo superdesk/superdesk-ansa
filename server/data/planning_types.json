@@ -1,22 +1,50 @@
 [
-    {
-        "_id" : "event",
-        "name": "event",
-        "schema": {
-        },
-        "editor": {
-        }
+  {
+    "_id": "event",
+    "name": "event",
+    "init_version": 1,
+    "schema": {
+      "language": {
+        "type": "string",
+        "required": true
+      }
     },
-    {
-        "_id": "planning",
-        "name": "planning",
-        "schema": {
-            "anpa_category": {
-                "required": false,
-                "type": "list"
-	        }
-        },
-        "editor": {
-        }
+    "editor": {
+      "language": {
+        "enabled": true
+      }
     }
+  },
+  {
+    "_id": "planning",
+    "name": "planning",
+    "init_version": 1,
+    "schema": {
+      "language": {
+        "type": "string",
+        "required": true
+      }
+    },
+    "editor": {
+      "language": {
+        "enabled": true
+      }
+    }
+  },
+  {
+    "_id": "coverage",
+    "name": "coverage",
+    "init_version": 1,
+    "schema": {
+      "language": {
+        "type": "string",
+        "required": true
+      }
+    },
+    "editor": {
+      "language": {
+        "enabled": true
+      }
+    }
+  }
 ]

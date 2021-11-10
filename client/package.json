@@ -1,12 +1,16 @@
 {
+    "name": "superdesk",
+    "license": "AGPL-3.0",
     "dependencies": {
-        "superdesk-core": "github:petrjasek/superdesk-client-core#a95eb8f",
-        "superdesk-planning": "github:superdesk/superdesk-planning#v1.33.1"
-    },
-    "devDependencies": {
-        "superdesk-code-style": "1.3.0"
+        "superdesk-core": "github:superdesk/superdesk-client-core#develop",
+        "superdesk-planning": "github:superdesk/superdesk-planning#develop"
     },
     "scripts": {
+        "build": "npx @superdesk/build-tools build-root-repo ./",
         "lint": "eslint --ext .js --ext .jsx ansa"
+    },
+    "devDependencies": {
+        "@superdesk/build-tools": "^1.0.18",
+        "superdesk-code-style": "1.3.0"
     }
 }

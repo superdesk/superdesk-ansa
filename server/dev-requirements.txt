@@ -2,6 +2,8 @@
 
 flake8
 nose
+requests_mock==1.5.2
+pep8
 httmock
 wooper
-requests_mock==1.5.2
+mypy

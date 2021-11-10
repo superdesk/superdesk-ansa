@@ -1,30 +1,17 @@
-FROM ubuntu:16.04
+FROM python:3.6
 
-ENV DEBIAN_FRONTEND=noninteractive 
+# install server
+WORKDIR /opt/superdesk/
+COPY requirements.txt ./
+RUN python3 -m pip install -U -r requirements.txt
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-python3 python3-dev python3-pip python3-venv python3-wheel \
-git gcc curl \
-# lxml
-libxml2-dev libxslt-dev \
-# PIL
-libjpeg-dev zlib1g-dev \
-# magic
-libmagic-dev \
-&& rm -rf /var/lib/apt/lists/* 
+# copy server
+COPY . .
 
-WORKDIR /opt/superdesk
+ENV PYTHONUNBUFFERED=1
+ENV C_FORCE_ROOT=False
+ENV CELERYBEAT_SCHEDULE_FILENAME=/tmp/celerybeatschedule.db
+ENV TZ=Europe/London
 
-# this will activate env for the following commands
-ENV VIRTUAL_ENV=/opt/superdesk/env
-RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-RUN pip3 install pip==20.3.4
-RUN pip3 install setuptools==50.3.1
-RUN pip3 install wheel
-
-COPY requirements.txt .
-
-RUN pip3 install -U -r /opt/superdesk/requirements.txt
-RUN pip3 install -U honcho gunicorn
+ENTRYPOINT ["honcho"]
+CMD ["start"]

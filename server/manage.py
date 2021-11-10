@@ -18,7 +18,7 @@ from app import get_app
 from ansa.commands.remove_expired_media import RemoveExpiredMediaCommand
 
 
-app = get_app(init_elastic=True)
+app = get_app()
 manager = Manager(app)
 
 

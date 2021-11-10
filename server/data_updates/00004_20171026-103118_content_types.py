@@ -5,18 +5,20 @@
 # at https://www.sourcefabric.org/superdesk/license
 #
 # Author  : mugur
-# Creation: 2016-08-03 17:16
+# Creation: 2017-10-26 10:31
 
 from superdesk.commands.data_updates import BaseDataUpdate
-from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
+from superdesk import get_resource_service
 
 
 class DataUpdate(BaseDataUpdate):
 
-    resource = "validators"
+    resource = "content_types"
 
     def forwards(self, mongodb_collection, mongodb_database):
-        AppInitializeWithDataCommand().run(entity_name="validators")
+        content_types_service = get_resource_service("content_types")
+        for content_type in content_types_service.get(req=None, lookup=None):
+            content_types_service.patch(content_type["_id"], {})
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass
