@@ -3,12 +3,6 @@ import angular from 'angular';
 import widgets from './widgets';
 import packages from './package-manager/package-manager';
 import {onChangeMiddleware} from 'superdesk-core/scripts/apps/authoring/authoring';
-import {startApp} from 'superdesk-core/scripts/index';
-import ansaIptc from '../extensions/ansaIptc/dist/extension';
-import imageShortcuts from '../extensions/imageShortcuts/dist/extension';
-import ansaArchive from '../extensions/ansa-archive';
-import lineCountInAuthoringHeader from '../extensions/lineCountInAuthoringHeader/dist/extension';
-import planningExtension from 'superdesk-planning/client/planning-extension/dist/extension';
 
 import AnsaRelatedCtrl from './AnsaRelatedCtrl';
 
@@ -676,22 +670,3 @@ export default angular.module('ansa.superdesk', [
         });
     }])
 ;
-
-setTimeout(() => {
-    startApp(
-        [
-            ansaIptc,
-            imageShortcuts,
-            planningExtension,
-            ansaArchive,
-            lineCountInAuthoringHeader,
-        ],
-        {},
-        {
-            countLines: (plainText, lineLength) =>
-                plainText
-                    .split('\n')
-                    .reduce((sum, line) => sum + (line.length > 0 ? Math.ceil(line.length / lineLength) : 1), 0),
-        }
-    );
-});
