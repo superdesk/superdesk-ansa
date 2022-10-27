@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'ansa.archive_manage',
     'ansa',
 
-    'planning',
+    #'planning',
 ]
 
 
