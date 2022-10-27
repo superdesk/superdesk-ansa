@@ -12665,5 +12665,27 @@
                 "qcode": 3
             }
         ]
+    },
+    {
+        "_id": "desk_types",
+        "display_name": "Desk Types",
+        "type": "unmanageable",
+        "selection_type": "do not show",
+        "items": [
+            {"is_active": true, "name": "authoring", "qcode": "authoring"},
+            {"is_active": true, "name": "production", "qcode": "production"}
+        ]
+    },
+    {
+        "_id": "languages",
+        "display_name": "Languages",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "init_version": 1,
+        "service": { "all": 1 },
+        "items": [
+            {"name": "English", "qcode": "en", "is_active": true },
+            {"name": "Italiano", "qcode": "it", "is_active": true }
+        ]
     }
 ]
