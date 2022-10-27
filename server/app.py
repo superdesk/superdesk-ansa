@@ -13,7 +13,6 @@ import os
 import settings
 
 from ansa.vfs import VFSMediaStorage
-from elasticapm.contrib.flask import ElasticAPM
 from superdesk.factory import get_app as superdesk_app
 
 
@@ -38,17 +37,6 @@ def get_app(config=None, init_elastic=False):
             config.setdefault(key, getattr(settings, key))
 
     app = superdesk_app(config, media_storage=media_storage)
-
-    if os.environ.get('APM_SERVER_URL') and os.environ.get('APM_SECRET_TOKEN'):
-        app.config['ELASTIC_APM'] = {
-            'DEBUG': app.debug,
-            'TRANSACTIONS_IGNORE_PATTERNS': ['^OPTIONS '],
-            'SERVER_URL': os.environ['APM_SERVER_URL'],
-            'SECRET_TOKEN': os.environ['APM_SECRET_TOKEN'],
-            'SERVICE_NAME': os.environ.get('APM_SERVICE_NAME') or 'superdesk',
-        }
-
-        ElasticAPM(app)
 
     return app
 
