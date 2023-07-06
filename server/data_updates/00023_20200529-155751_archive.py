@@ -10,14 +10,14 @@
 import re
 import logging
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from superdesk import get_resource_service
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
     resource = "archive"
 
     def forwards(self, mongodb_collection, mongodb_database):
