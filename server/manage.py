@@ -22,9 +22,9 @@ app = get_app(init_elastic=True)
 manager = Manager(app)
 
 
-commands = {'ansa:remove_expired_media': RemoveExpiredMediaCommand()}
+commands = {"ansa:remove_expired_media": RemoveExpiredMediaCommand()}
 commands.update(superdesk.COMMANDS)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     manager.run(commands)

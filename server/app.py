@@ -17,7 +17,7 @@ from ansa.vfs import VFSMediaStorage
 
 
 media_storage = None
-if os.environ.get('ANSA_VFS'):
+if os.environ.get("ANSA_VFS"):
     media_storage = VFSMediaStorage
 
 

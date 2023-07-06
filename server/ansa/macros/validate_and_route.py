@@ -19,7 +19,7 @@ def callback(item, **kwargs):
     return item
 
 
-name = 'validate-headline-desk-routing'
-label = 'Validate Headline and Desk Routing'
-access_type = 'backend'
-action_type = 'direct'
+name = "validate-headline-desk-routing"
+label = "Validate Headline and Desk Routing"
+access_type = "backend"
+action_type = "direct"

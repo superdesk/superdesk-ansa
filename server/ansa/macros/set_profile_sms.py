@@ -9,14 +9,10 @@ PROFILE = "SMS"
 
 
 def callback(item, **kwargs):
-    profile = superdesk.get_resource_service("content_types").find_one(
-        req=None, label=PROFILE
-    )
+    profile = superdesk.get_resource_service("content_types").find_one(req=None, label=PROFILE)
     if profile:
         item["profile"] = profile["_id"]
-        template = superdesk.get_resource_service(
-            "content_templates"
-        ).get_template_by_name(PROFILE)
+        template = superdesk.get_resource_service("content_templates").get_template_by_name(PROFILE)
         if template:
             render_content_template_by_id(item, template["_id"], update=True)
         else:

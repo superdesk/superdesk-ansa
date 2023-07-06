@@ -20,13 +20,14 @@ def auto_publish(item, **kwargs):
     :param kwargs:
     :return:
     """
-    get_resource_service('archive_publish').patch(id=item[config.ID_FIELD],
-                                                  updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, 'auto_publish': True})
+    get_resource_service("archive_publish").patch(
+        id=item[config.ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, "auto_publish": True}
+    )
     return item
 
 
-name = 'Auto Publish'
-label = 'Auto Publish'
+name = "Auto Publish"
+label = "Auto Publish"
 callback = auto_publish
-access_type = 'backend'
-action_type = 'direct'
+access_type = "backend"
+action_type = "direct"

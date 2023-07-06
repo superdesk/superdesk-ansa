@@ -11,7 +11,6 @@ from superdesk import get_resource_service
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "vocabularies"
 
     def forwards(self, mongodb_collection, mongodb_database):

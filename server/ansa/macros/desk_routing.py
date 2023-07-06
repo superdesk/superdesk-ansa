@@ -10,9 +10,7 @@ def get_destination_desk(desk, limit=10):
     if not desk.get("closed_destination"):
         return desk
     return get_destination_desk(
-        get_resource_service("desks").find_one(
-            req=None, _id=desk["closed_destination"]
-        ),
+        get_resource_service("desks").find_one(req=None, _id=desk["closed_destination"]),
         limit - 1,
     )
 
