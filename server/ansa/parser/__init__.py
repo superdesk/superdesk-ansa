@@ -1,4 +1,3 @@
-
 from .parser import ANSAParser
 from .picture import PictureParser
 from superdesk.io.registry import registered_feed_parsers

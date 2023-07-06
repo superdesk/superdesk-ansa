@@ -36,46 +36,36 @@ class Errors:
 
 def is_user_external(user):
     role = get_user_role(user)
-    return role and role.get('name') == 'Ext'
+    return role and role.get("name") == "Ext"
 
 
 def is_user_producer(user):
     role = get_user_role(user)
-    return role and role.get('name') == 'Pro'
+    return role and role.get("name") == "Pro"
 
 
 def is_user_journalist(user):
     role = get_user_role(user)
-    return role and (role.get('name') == 'Gio' or role.get('name') == 'CoG')
+    return role and (role.get("name") == "Gio" or role.get("name") == "CoG")
 
 
 def is_user_collaborator(user):
     role = get_user_role(user)
-    return role and role.get('name') == 'Col'
+    return role and role.get("name") == "Col"
 
 
 def get_user_role(user):
-    return (
-        superdesk.get_resource_service('roles').find_one(req=None, _id=user['role'])
-        if user.get('role')
-        else None
-    )
+    return superdesk.get_resource_service("roles").find_one(req=None, _id=user["role"]) if user.get("role") else None
 
 
 def get_active_mask(products):
     mask = {}
     if products:
-        cv = superdesk.get_resource_service("vocabularies").find_one(
-            req=None, _id="products"
-        )
+        cv = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="products")
         codes = {product["qcode"]: 1 for product in products}
         if cv and cv.get("items"):
             for item in cv["items"]:
-                if (
-                    codes.get(item.get("qcode"))
-                    and item.get(MASK_FIELD)
-                    and len(str(item[MASK_FIELD])) >= 9
-                ):
+                if codes.get(item.get("qcode")) and item.get(MASK_FIELD) and len(str(item[MASK_FIELD])) >= 9:
                     value = str(item[MASK_FIELD])
                     for i in range(len(str(item[MASK_FIELD]))):
                         if value[i] == "1":
@@ -84,7 +74,7 @@ def get_active_mask(products):
 
 
 def url_exists(url):
-    if 'filebymd5' not in url:  # only check vfs urls
+    if "filebymd5" not in url:  # only check vfs urls
         return True
     infourl = url.replace("binfilebymd5", "infofilebymd5")
     resp = requests.get(infourl, timeout=5)
@@ -102,16 +92,12 @@ def validate(sender, item, response, error_fields, **kwargs):
 
     # check content profile for extra field Autore
     profile = None
-    if item.get("type") != "picture" and item.get('profile'):
-        profile = get_resource_service('content_types').find_one(
-            req=None, _id=item['profile']
-        )
-    if profile is not None and profile['editor'].get('Autore'):
+    if item.get("type") != "picture" and item.get("profile"):
+        profile = get_resource_service("content_types").find_one(req=None, _id=item["profile"])
+    if profile is not None and profile["editor"].get("Autore"):
         try:
-            autore = extra.get("Autore") or (item['sign_off']).split('/')[0]
-            user = superdesk.get_resource_service('users').find_one(
-                req=None, username=autore
-            )
+            autore = extra.get("Autore") or (item["sign_off"]).split("/")[0]
+            user = superdesk.get_resource_service("users").find_one(req=None, username=autore)
         except KeyError:
             user = None
 
@@ -120,25 +106,19 @@ def validate(sender, item, response, error_fields, **kwargs):
             # digitatore = extra.get("Digitatore")
 
             if not extra.get("Autore") is None and (
-                (not user and not coautore)
-                or (user and not is_user_journalist(user))
-                and not coautore
+                (not user and not coautore) or (user and not is_user_journalist(user)) and not coautore
             ):
                 response.append("Co-Author: is missing")
             # if (
-                # (autore and len(autore) > 3)
-                # or (coautore and len(coautore) > 3)
-                # or (digitatore and len(digitatore) > 3)
+            # (autore and len(autore) > 3)
+            # or (coautore and len(coautore) > 3)
+            # or (digitatore and len(digitatore) > 3)
             # ):
-                # response.append("Check the sign-off lengths")
+            # response.append("Check the sign-off lengths")
         except KeyError:
             pass
 
-    products = [
-        subject
-        for subject in item.get("subject", [])
-        if subject.get("scheme") == "products"
-    ]
+    products = [subject for subject in item.get("subject", []) if subject.get("scheme") == "products"]
 
     mask = get_active_mask(products)
     length = get_char_count(item.get("body_html") or "<p></p>")
@@ -166,11 +146,7 @@ def validate(sender, item, response, error_fields, **kwargs):
             response.append("Subtitle is required")
 
     if mask.get(Validators.SUBJECT_REQUIRED):
-        subjects = [
-            subject
-            for subject in item.get("subject", [])
-            if subject.get("scheme") is None
-        ]
+        subjects = [subject for subject in item.get("subject", []) if subject.get("scheme") is None]
         if not len(subjects):
             response.append("Subject is required")
 
@@ -182,13 +158,9 @@ def validate(sender, item, response, error_fields, **kwargs):
         response.append("Body is longer than 6400 characters")
 
     associations = item.get("associations") or {}
-    pictures = [
-        val for val in associations.values() if val and val.get("type") == "picture"
-    ]
+    pictures = [val for val in associations.values() if val and val.get("type") == "picture"]
     gallery = [
-        val
-        for key, val in associations.items()
-        if val and val.get("type") == "picture" and key.startswith(GALLERY)
+        val for key, val in associations.items() if val and val.get("type") == "picture" and key.startswith(GALLERY)
     ]
 
     if mask.get(Validators.FEATURED_REQUIRED):
@@ -200,29 +172,21 @@ def validate(sender, item, response, error_fields, **kwargs):
             response.append("Photo gallery is required")
 
     try:
-        sign_off_author = (item['sign_off']).split('/')[0]
-        user = superdesk.get_resource_service('users').find_one(
-            req=None, username=sign_off_author
-        )
+        sign_off_author = (item["sign_off"]).split("/")[0]
+        user = superdesk.get_resource_service("users").find_one(req=None, username=sign_off_author)
     except (KeyError, AttributeError):
         user = None
 
     if user and is_user_external(user) and not mask.get(Validators.PRODUCT_ALLOWED):
         response.append("Products not allowed to external User")
 
-    if item.get('task') and item['task'].get('desk'):
-        desk = superdesk.get_resource_service('desks').find_one(
-            req=None, _id=item['task']['desk']
-        )
+    if item.get("task") and item["task"].get("desk"):
+        desk = superdesk.get_resource_service("desks").find_one(req=None, _id=item["task"]["desk"])
     else:
         desk = None
 
     for picture in pictures:
-        if (
-            picture.get("extra")
-            and picture["extra"].get("supplier")
-            and picture["extra"]["supplier"].lower() == "afp"
-        ):
+        if picture.get("extra") and picture["extra"].get("supplier") and picture["extra"]["supplier"].lower() == "afp":
             response.append(Errors.AFP_IMAGE_USAGE)
             break
 
@@ -230,7 +194,7 @@ def validate(sender, item, response, error_fields, **kwargs):
             picture.get("extra")
             and picture["extra"].get("supplier")
             and picture["extra"]["supplier"].lower() == "xinhua"
-            and "TAP" not in desk['name']
+            and "TAP" not in desk["name"]
         ):
             response.append(Errors.XINHUA_IMAGE_USAGE)
             break

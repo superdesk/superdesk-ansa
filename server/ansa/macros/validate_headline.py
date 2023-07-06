@@ -15,13 +15,13 @@ from eve.validation import ValidationError
 
 def callback(item, **kwargs):
     try:
-        if request and item.get('headline') and len(item['headline']) > app.config['HEADLINE_MAXLENGTH']:
+        if request and item.get("headline") and len(item["headline"]) > app.config["HEADLINE_MAXLENGTH"]:
             raise ValidationError("Headline is too long")
     except KeyError:
         return item
 
 
-name = 'validate-headline'
-label = 'Validate Headline'
-access_type = 'backend'
-action_type = 'direct'
+name = "validate-headline"
+label = "Validate Headline"
+access_type = "backend"
+action_type = "direct"

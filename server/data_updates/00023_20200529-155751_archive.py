@@ -10,39 +10,38 @@
 import re
 import logging
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from superdesk import get_resource_service
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class DataUpdate(DataUpdate):
-
-    resource = 'archive'
+class DataUpdate(BaseDataUpdate):
+    resource = "archive"
 
     def forwards(self, mongodb_collection, mongodb_database):
         service = get_resource_service(self.resource)
-        desk = mongodb_database['desks'].find_one({'name': re.compile(r'^XFV')})  # image desk
+        desk = mongodb_database["desks"].find_one({"name": re.compile(r"^XFV")})  # image desk
         if not desk:
-            logger.warning('desk XFV not found')
+            logger.warning("desk XFV not found")
             return
-        ids = list(mongodb_collection.find({'state': 'published', 'task.desk': None}, {'_id': True}))
+        ids = list(mongodb_collection.find({"state": "published", "task.desk": None}, {"_id": True}))
         if ids:
-            logger.info('attaching %d items to desk %s', len(ids), desk['name'])
+            logger.info("attaching %d items to desk %s", len(ids), desk["name"])
         else:
-            logger.info('no published items without desk found')
+            logger.info("no published items without desk found")
         for _id in ids:
-            item = service.find_one(req=None, _id=_id['_id'])
+            item = service.find_one(req=None, _id=_id["_id"])
             updates = {
-                'task': {
-                    'desk': desk['_id'],
-                    'stage': desk['working_stage'],
-                    'user': item.get('original_creator'),
+                "task": {
+                    "desk": desk["_id"],
+                    "stage": desk["working_stage"],
+                    "user": item.get("original_creator"),
                 },
             }
-            logger.info('updating item %s', item['_id'])
-            service.system_update(item['_id'], updates, item)
+            logger.info("updating item %s", item["_id"])
+            service.system_update(item["_id"], updates, item)
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass

@@ -1,0 +1,11 @@
+mypy
+mypy-extensions
+types-Flask
+types-Jinja2
+types-Werkzeug
+types-beautifulsoup4
+lxml-stubs
+types-babel
+types-requests
+typing-extensions
+types-pytz

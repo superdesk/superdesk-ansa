@@ -12,7 +12,6 @@ from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "validators"
 
     def forwards(self, mongodb_collection, mongodb_database):

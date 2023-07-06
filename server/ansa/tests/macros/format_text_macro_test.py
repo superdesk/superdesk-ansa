@@ -7,7 +7,6 @@ from ansa.macros.format_text_width import format_text_macro
 
 
 class LowercaseMacro(unittest.TestCase):
-
     maxDiff = None
 
     def test_format_text_macro(self):

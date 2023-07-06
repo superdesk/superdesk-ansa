@@ -13,9 +13,7 @@ def schedule(item, time):
     if local.time() >= time:
         local += timedelta(days=1)
 
-    local = local.replace(
-        hour=time.hour, minute=time.minute, second=time.second, microsecond=0
-    )
+    local = local.replace(hour=time.hour, minute=time.minute, second=time.second, microsecond=0)
 
     item[SCHEDULE_SETTINGS] = {"time_zone": TZ}
     item[PUBLISH_SCHEDULE] = local
