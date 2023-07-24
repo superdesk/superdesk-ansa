@@ -12683,5 +12683,45 @@
                 "qcode": "production"
             }
         ]
-    }
-]
+    },
+    {
+        "field_type": "text",
+        "items": [],
+        "type": "manageable",
+        "service": {
+            "all": 1
+        },
+        "_id": "supplier",
+        "display_name": "Supplier",
+        "field_options": {
+            "single": true
+        }
+    },
+    {
+        "_id": "PhotoCategories",
+        "items": [
+            {
+                "is_active": true,
+                "name": "CLJ",
+                "qcode": "CLJ"
+            },
+            {
+                "is_active": true,
+                "name": "ACE",
+                "qcode": "ACE"
+            }
+        ],
+        "type": "manageable",
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "parent": {}
+        },
+        "service": {
+            "all": 1
+        },
+        "selection_type": "single selection",
+        "display_name": "Photo Category",
+        "disable_entire_category_selection": false,
+        "unique_field": "qcode"
+    } ]
