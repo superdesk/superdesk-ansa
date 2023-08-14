@@ -36,6 +36,9 @@ def get_user_role(user):
 class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
     DATETIME_USE_CURRENT_TIME = True
 
+    name = "ANSA NewsML G2"
+    type = "newsmlg2ansa"
+
     def _format_content(self, article, news_item, nitf):
         """Adds the content set to the xml.
 
@@ -126,7 +129,7 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
         :param dict article:
         :return: True if article can formatted else False
         """
-        return format_type == "newsmlg2ansa"
+        return format_type == self.type
 
     def _format_content_meta(self, article, content_meta, item):
         super()._format_content_meta(article, content_meta, item)
@@ -695,6 +698,9 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
 
 
 class ANSAHTMLNewsMLG2Formatter(ANSAPlainTextNewsMLG2Formatter):
+    name = "ANSA HTML NewsML G2"
+    type = "newsmlg2ansaHTML"
+
     def _build_html_doc(self, article):
         try:
             html = etree.HTML(article.get("body_html"))
@@ -703,6 +709,3 @@ class ANSAHTMLNewsMLG2Formatter(ANSAPlainTextNewsMLG2Formatter):
                 logger.exception("XML parsing error")
             html = None
         return html if html is not None else etree.HTML("<p>%s</p>" % article.get("headline") or "")
-
-    def can_format(self, format_type, article):
-        return format_type == "newsmlg2ansaHTML"
