@@ -12698,30 +12698,135 @@
         }
     },
     {
+        "service": {
+        "all": 1
+        },
+        "unique_field": "qcode",
+        "type": "manageable",
+        "schema": {
+        "parent": {},
+        "qcode": {},
+        "name": {}
+        },
+        "preffered_items": true,
+        "popup_width": 200,
+        "selection_type": "single selection",
         "_id": "PhotoCategories",
         "items": [
             {
-                "is_active": true,
-                "name": "CLJ",
-                "qcode": "CLJ"
+                "name": "ACE",
+                "qcode": "iptc01000000",
+                "is_active": true
             },
             {
-                "is_active": true,
-                "name": "ACE",
-                "qcode": "ACE"
+                "name": "CLJ",
+                "qcode": "iptc02000000",
+                "is_active": true
+            },
+            {
+                "name": "DIS",
+                "qcode": "iptc03000000",
+                "is_active": true
+            },
+            {
+                "parent": "",
+                "name": "FIN",
+                "qcode": "iptc04000000",
+                "is_active": true
+            },
+            {
+                "name": "EDU",
+                "qcode": "iptc05000000",
+                "is_active": true
+            },
+            {
+                "name": "EVN",
+                "qcode": "iptc06000000",
+                "is_active": true
+            },
+            {
+                "name": "HTH",
+                "qcode": "iptc07000000",
+                "is_active": true
+            },
+            {
+                "name": "HUM",
+                "qcode": "iptc08000000",
+                "is_active": true
+            },
+            {
+                "name": "LAB",
+                "qcode": "iptc09000000",
+                "is_active": true
+            },
+            {
+                "name": "LIF",
+                "qcode": "iptc10000000",
+                "is_active": true
+            },
+            {
+                "name": "POL",
+                "qcode": "iptc11000000",
+                "is_active": true
+            },
+            {
+                "name": "REL",
+                "qcode": "iptc12000000",
+                "is_active": true
+            },
+            {
+                "name": "SCI",
+                "qcode": "iptc13000000",
+                "is_active": true
+            },
+            {
+                "name": "SOI",
+                "qcode": "iptc14000000",
+                "is_active": true
+            },
+            {
+                "name": "SPO",
+                "qcode": "iptc15000000",
+                "is_active": true
+            },
+            {
+                "parent": null,
+                "name": "WAR",
+                "qcode": "iptc16000000",
+                "is_active": true
+            },
+            {
+                "parent": null,
+                "name": "WEA",
+                "qcode": "iptc17000000",
+                "is_active": true
             }
         ],
-        "type": "manageable",
+        "field_type": null,
+        "display_name": "Photo Categories",
+        "init_version": 2
+    },
+    {
+        "unique_field": "name",
+        "_id": "crop_sizes",
+        "items": [
+        {
+            "height": "600",
+            "name": "4-3",
+            "width": "800",
+            "is_active": true
+        }
+        ],
         "schema": {
-            "name": {},
-            "qcode": {},
-            "parent": {}
+        "height": {
+            "type": "int"
         },
-        "service": {
-            "all": 1
+        "name": {},
+        "width": {
+            "type": "int"
+        }
         },
-        "selection_type": "single selection",
-        "display_name": "Photo Category",
-        "disable_entire_category_selection": false,
-        "unique_field": "qcode"
-    } ]
+        "display_name": "Image Crop Sizes",
+        "type": "manageable"
+    }
+]
