@@ -13,6 +13,7 @@ from urllib.parse import urljoin
 from flask import current_app as app, json
 from eve.io.media import MediaStorage
 from superdesk.errors import SuperdeskError
+from superdesk.storage import MimetypeMixin
 
 UPLOAD_ENDPOINT = "/bdmvfs/rest/uploadfile"
 BINARY_ENDPOINT = "/bdmvfs/rest/binfilebymd5/%s"
@@ -65,7 +66,7 @@ def is_error(xml):
         return False
 
 
-class VFSMediaStorage(MediaStorage):
+class VFSMediaStorage(MediaStorage, MimetypeMixin):
     def __init__(self, app=None):
         super().__init__(app)
         self._sess = requests.Session()
