@@ -115,6 +115,10 @@
         overflow: visible;
     }
 
+    .simple-list__item {
+        padding-inline: 1.2rem;
+    }
+
     .collapsed-content {
         padding: 0 0 0 1.2rem;
         border-left: 4px solid rgba(0, 0, 0, 0.15);
