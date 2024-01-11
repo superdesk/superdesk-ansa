@@ -177,6 +177,7 @@ function AnsaMetasearchItem(config, $http, $sce) {
                 link.href = scope.item.url;
                 link.text = scope.item.title;
                 dt.setData('text/html', link.outerHTML);
+                dt.setData('application/superdesk.compatible.embed', JSON.stringify({}));
                 dt.setData('text/uri-list', scope.item.url);
             });
 
