@@ -10,7 +10,7 @@
 
 
 from flask import current_app as app, request
-from eve.validation import ValidationError
+from superdesk.validation import ValidationError
 
 
 def callback(item, **kwargs):
