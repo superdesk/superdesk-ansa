@@ -1,6 +1,6 @@
 .widget-ansa-semantics {
     .tag-list {
-        margin: 0;
+        margin: 10px;
 
         .tag-label {
             margin-right: 0.4rem;
@@ -295,14 +295,14 @@ div[data-field="genre"] .dropdown--dropleft .dropdown__menu {
   text-transform: uppercase;
 }
 
-.item-association { 
-//	border: 2px dashed rgba(150, 150, 150, 0.3); 
-	background-color: rgba(150, 150, 150, 0.06); 
-	color: inherit; 
-	width: 100%; 
+.item-association {
+//	border: 2px dashed rgba(150, 150, 150, 0.3);
+	background-color: rgba(150, 150, 150, 0.06);
+	color: inherit;
+	width: 100%;
 	height: auto;
 	min-height: 65px;
-	position: relative; 
+	position: relative;
 }
 
 .mlist-view .media-box .item-info time, .compact-view .media-box .item-info time {
