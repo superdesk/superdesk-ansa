@@ -22,6 +22,7 @@ if init_data.exists():
     INIT_DATA_PATH = init_data
 
 INSTALLED_APPS = [
+    "ansa.macros",
     "apps.languages",
     "ansa.analysis",
     "ansa.search",
