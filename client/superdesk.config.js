@@ -188,5 +188,9 @@ module.exports = function() {
         view: {
             timeformat: 'HH:mm:ss'
         },
+
+        iframely: {
+            key: 'fbb93af3c22ed6ca6bc53a',
+        }
     };
 };
