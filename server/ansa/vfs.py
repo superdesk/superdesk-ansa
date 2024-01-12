@@ -80,6 +80,10 @@ class VFSMediaStorage(MediaStorage, MimetypeMixin):
             metadata = self.metadata(id_or_filename, resource, ignore_error=True)
             return VFSObjectWrapper(id_or_filename, resp.content, metadata)
 
+    def get_by_filename(self, filename):
+        _id, _ = os.path.splitext(filename)
+        return self.get(_id)
+
     def exists(self, id_or_filename, resource=None):
         try:
             return bool(self.metadata(id_or_filename, resource))

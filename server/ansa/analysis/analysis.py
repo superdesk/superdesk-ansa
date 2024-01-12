@@ -10,6 +10,7 @@
 
 
 import json
+import logging
 import requests
 import requests.exceptions
 
@@ -17,6 +18,8 @@ from flask import current_app as app
 from superdesk.resource import Resource, not_analyzed, not_enabled
 from superdesk.services import BaseService
 from ansa.geonames import get_place_by_id
+
+logger = logging.getLogger(__name__)
 
 
 FORMAT_XML = "xml"
@@ -136,6 +139,7 @@ class AnalysisResource(Resource):
         "abstract": {"type": "string", "required": False},
         "text": {"type": "string", "required": True},
         "lang": {"type": "string", "required": False},
+        "semantics": {"type": "dict", "readonly": True},
     }
 
     resource_methods = ["POST"]
@@ -174,7 +178,8 @@ class AnalysisService(BaseService):
             r = requests.post(self.URL_EXTRACTION, extraction_data, timeout=(5, 30))
             extracted = json.loads(r.text)
             return parse(extracted)
-        except (requests.exceptions.ReadTimeout, json.JSONDecodeError):
+        except (requests.exceptions.ReadTimeout, json.JSONDecodeError) as err:
+            logger.exception(err)
             return {}
 
     def apply(self, analysed, item, skip_products=False):
