@@ -614,11 +614,35 @@ export default angular.module('ansa.superdesk', [
                 prev = original;
             }
 
-            if (item.priority === 2 && prev.priority !== 2 && !hasPlus) {
-                item.headline = '++ ' + headline + ' ++';
+            const flashRight = ' +++ FLASH +++';
+            const flashLeft = '+++ FLASH +++ ';
+            const bulletRight = ' ++';
+            const bulletLeft = '++ ';
+
+            if (item.priority === 1) {
+                if (prev.priority !== 1 && !hasPlus) {
+                    item.headline = flashLeft + headline + flashRight;
+                } else if (prev.priority === 2 && hasPlus) {
+                    item.headline = item.headline.replaceAll(bulletLeft, '').replaceAll(bulletRight, '');
+                    item.headline = flashLeft + item.headline + flashRight;
+                }
+
                 updated = true;
-            } else if (item.priority !== 2 && (prev.priority == null || prev.priority === 2) && hasPlus) {
-                item.headline = headline.replace('++ ', '').replace(' ++', '');
+            } else if (item.priority === 2) {
+                if (prev.priority !== 2 && !hasPlus) {
+                    item.headline = bulletLeft + headline + bulletRight;
+                } else if (prev.priority === 1 && hasPlus) {
+                    item.headline = item.headline.replaceAll(flashLeft, '').replaceAll(flashRight, '');
+                    item.headline = bulletLeft + item.headline + bulletRight;
+                }
+
+                updated = true;
+            } else if (item.priority !== 2 && (prev.priority == null || prev.priority === 2 || prev.priority === 1) && hasPlus) {
+                item.headline = headline
+                    .replace(flashRight, '')
+                    .replace(flashLeft, '')
+                    .replace(bulletLeft, '')
+                    .replace(bulletRight, '');
                 updated = true;
             }
 
