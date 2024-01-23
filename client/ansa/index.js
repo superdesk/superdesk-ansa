@@ -209,60 +209,8 @@ function AnsaMetasearchItem(config, $http, $sce) {
 
 AnsaMetasearchItem.$inject = ['config', '$http', '$sce'];
 
-AnsaSemanticsCtrl.$inject = ['$scope', '$rootScope', 'api'];
-function AnsaSemanticsCtrl($scope, $rootScope, api) {
-    let save = (result) => {
-        $scope.item.semantics = result.semantics;
-
-        if (result.place && isEmpty($scope.item.place)) {
-            $scope.item.place = result.place;
-        }
-
-        if (!isEmpty(result.subject)) {
-            const subjects = $scope.item.subject || [];
-
-            $scope.item.subject = subjects.concat(
-                result.subject.filter(
-                    (subject) => !subjects.find(
-                        (selectedSubject) => (
-                            selectedSubject.qcode === subject.qcode &&
-                            (selectedSubject.scheme === subject.scheme || (
-                                selectedSubject.scheme == null && subject.scheme == null
-                            ))
-                        )
-                    ) && (subject.scheme !== 'products' || $scope.item.type === 'text')
-                )
-            );
-        }
-
-        if (result.slugline && isEmpty($scope.item.slugline)) {
-            $scope.item.slugline = result.slugline;
-        }
-
-        if (result.keywords && isEmpty($scope.item.keywords)) {
-            $scope.item.keywords = result.keywords;
-        }
-
-        $scope.save();
-    };
-
-    let init = () => {
-        if ($scope.item.semantics) {
-            this.data = angular.extend({}, $scope.item.semantics);
-        } else {
-            this.refresh();
-        }
-    };
-
-    let text = (val) => {
-        try {
-            return angular.element(val).text();
-        } catch (err) {
-            return val || '';
-        }
-    };
-
-    this.refresh = () => api.save('analysis', {
+export function refreshAnalysis($scope, api, $rootScope, save) {
+    return api.save('analysis', {
         lang: $scope.item.language === 'en' ? 'ENG' : 'ITA',
         title: $scope.item.headline || '',
         text: [
@@ -272,14 +220,75 @@ function AnsaSemanticsCtrl($scope, $rootScope, api) {
         ].join('\n'),
         abstract: '',
     }).then((result) => {
-        this.data = result.semantics;
-        save(result);
-        broadcast(result.semantics);
+        saveSemantics($scope, result, save);
+        $rootScope.$broadcast('semantics:update', result.semantics);
+        return result.semantics;
     });
+}
+
+let text = (val) => {
+    try {
+        return angular.element(val).text();
+    } catch (err) {
+        return val || '';
+    }
+};
+
+export function saveSemantics($scope, result, save) {
+    $scope.item.semantics = result.semantics;
+
+    if (result.place && isEmpty($scope.item.place)) {
+        $scope.item.place = result.place;
+    }
+
+    if (!isEmpty(result.subject)) {
+        const subjects = $scope.item.subject || [];
+
+        $scope.item.subject = subjects.concat(
+            result.subject.filter(
+                (subject) => !subjects.find(
+                    (selectedSubject) => (
+                        selectedSubject.qcode === subject.qcode &&
+                        (selectedSubject.scheme === subject.scheme || (
+                            selectedSubject.scheme == null && subject.scheme == null
+                        ))
+                    )
+                ) && (subject.scheme !== 'products' || $scope.item.type === 'text')
+            )
+        );
+    }
+
+    if (result.slugline && isEmpty($scope.item.slugline)) {
+        $scope.item.slugline = result.slugline;
+    }
+
+    if (result.keywords && isEmpty($scope.item.keywords)) {
+        $scope.item.keywords = result.keywords;
+    }
+
+    // Function is used in Related items and Semantics widget both.
+    // In the Related items widget, we don't modify semantics data, we only need it for
+    // further processing. Thus we don't need to save it on the article.
+    if (save) {
+        $scope.save();
+    }
+}
+
+AnsaSemanticsCtrl.$inject = ['$scope', '$rootScope', 'api'];
+export function AnsaSemanticsCtrl($scope, $rootScope, api) {
+    let init = () => {
+        if ($scope.item.semantics) {
+            this.data = angular.extend({}, $scope.item.semantics);
+        } else {
+            refreshAnalysis($scope, api, $rootScope, true).then((result) => {
+                this.data = result;
+            });
+        }
+    };
 
     this.remove = (term, category) => {
         this.data[category] = without(this.data[category], term);
-        save({semantics: this.data});
+        saveSemantics($scope, {semantics: this.data});
         broadcast(this.data);
     };
 

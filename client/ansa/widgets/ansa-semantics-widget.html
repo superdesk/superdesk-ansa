@@ -1,6 +1,12 @@
 <div ng-controller="AnsaSemanticsCtrl as semantics" class="widget">
     <fieldset sd-loading="!semantics.data" class="fieldset--no-padding sd-text__right widget-header__action">
-        <button class="btn btn--icon-only-circle btn--hollow btn--primary" ng-click="semantics.refresh()" sd-tooltip="{{'Refresh' | translate}}" flow="left">
+        <button
+            ng-disabled="item.state === 'published'"
+            class="btn btn--icon-only-circle btn--hollow btn--primary"
+            ng-click="semantics.refresh()"
+            sd-tooltip="{{'Refresh' | translate}}"
+            flow="left"
+        >
             <i class="icon-repeat"></i>
         </button>
     </fieldset>
