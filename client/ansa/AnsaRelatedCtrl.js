@@ -19,7 +19,6 @@ export default function AnsaRelatedCtrl($scope, api, $rootScope, storage, Keys) 
             this.items = null;
             let semantics = $scope.item.semantics || {};
 
-            console.log($scope.item.semantics)
             if (isEmpty(semantics.iptcCodes) && isEmpty(semantics.persons)
                 && isEmpty(semantics.organisations) && !this.query) {
                 this.items = [];
