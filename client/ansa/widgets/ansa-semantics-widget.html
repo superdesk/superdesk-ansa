@@ -4,7 +4,7 @@
             ng-disabled="item.state === 'published'"
             class="btn btn--icon-only-circle btn--hollow btn--primary"
             ng-click="semantics.refresh()"
-            sd-tooltip="{{item.state === 'published' ? 'Not available for this article' : 'Refresh' | translate}}"
+            sd-tooltip="{{item.state === 'published' ? 'Not available for published articles' : 'Refresh' | translate}}"
             flow="left"
         >
             <i class="icon-repeat"></i>
