@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "main": "dist/extension.js",
+  "name": "ansa-iptc",
+  "version": "1.0.0",
+  "scripts": {
+    "compile": "tsc",
+    "watch": "tsc -watch"
+  },
+  "dependencies": {
+    "draft-js": "github:superdesk/draft-js#master"
+  },
+  "devDependencies": {
+    "@types/draft-js": "0.11.5",
+    "typescript": "3.7.2"
+  }
+}

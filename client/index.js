@@ -11,7 +11,10 @@ setTimeout(() => startApp(
             id: 'imageShortcuts',
             load: () => import('./extensions/imageShortcuts'),
         },
-
+        {
+            id: 'priority-headline-changes',
+            load: () => import('./extensions/priorityHeadlineChanges'),
+        },
         {
             id: 'ansa-archive',
             load: () => import('./extensions/ansa-archive'),
