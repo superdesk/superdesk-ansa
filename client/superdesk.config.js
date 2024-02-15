@@ -7,7 +7,7 @@
 module.exports = function() {
     return {
         apps: ['ansa.superdesk', 'superdesk-planning'],
-        importApps: ['../ansa', 'superdesk-planning'],
+        importApps: ['../index', 'superdesk-planning'],
         defaultRoute: '/workspace/monitoring',
         workspace: {
             ingest: 1,
