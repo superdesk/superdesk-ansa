@@ -7,7 +7,6 @@ import {isEqual} from 'lodash';
 import {appConfig} from 'superdesk-core/scripts/appConfig';
 
 const extension: IExtension = {
-    id: 'priority-headline-changes',
     activate: () => {
         const result: IExtensionActivationResult = {
             contributions: {
@@ -15,14 +14,14 @@ const extension: IExtension = {
                     onFieldChange: (fieldId, fieldsData, computeLatestEntity, exposed) => {
                         // acts as previous article here, fieldsData has the actual latest data,
                         // this one has the latest rendered data
-                        const prevArticle = computeLatestEntity();
+                        const latestRenderedArticle = computeLatestEntity();
                         let headline = (fieldsData.get('headline') as {store: any; contentState: ContentState})
                             .contentState.getPlainText();
                         const priority: number = fieldsData.get('priority') as number;
                         const genre = fieldsData.get('genre');
-                        const prevGenre = prevArticle.genre[0].qcode;
+                        const prevGenre = latestRenderedArticle.genre[0].qcode;
 
-                        if (priority == prevArticle.priority && genre == prevGenre) {
+                        if (priority == latestRenderedArticle.priority && genre == prevGenre) {
                             return fieldsData;
                         }
 
@@ -34,24 +33,24 @@ const extension: IExtension = {
                         const bulletLeft = '++ ';
 
                         if (priority === 1) {
-                            if (prevArticle.priority !== 1 && !hasPlus) {
+                            if (latestRenderedArticle.priority !== 1 && !hasPlus) {
                                 headline = flashLeft + headline + flashRight;
-                            } else if (prevArticle.priority === 2 && hasPlus) {
+                            } else if (latestRenderedArticle.priority === 2 && hasPlus) {
                                 headline = headline.replaceAll(bulletLeft, '').replaceAll(bulletRight, '');
                                 headline = flashLeft + headline + flashRight;
                             }
 
                             updated = true;
                         } else if (priority === 2) {
-                            if (prevArticle.priority !== 2 && !hasPlus) {
+                            if (latestRenderedArticle.priority !== 2 && !hasPlus) {
                                 headline = bulletLeft + headline + bulletRight;
-                            } else if (prevArticle.priority === 1 && hasPlus) {
+                            } else if (latestRenderedArticle.priority === 1 && hasPlus) {
                                 headline = headline.replaceAll(flashLeft, '').replaceAll(flashRight, '');
                                 headline = bulletLeft + headline + bulletRight;
                             }
 
                             updated = true;
-                        } else if (priority !== 2 && (prevArticle.priority == null || prevArticle.priority === 2 || prevArticle.priority === 1) && hasPlus) {
+                        } else if (priority !== 2 && (latestRenderedArticle.priority == null || latestRenderedArticle.priority === 2 || latestRenderedArticle.priority === 1) && hasPlus) {
                             headline = headline
                                 .replace(flashRight, '')
                                 .replace(flashLeft, '')
@@ -62,13 +61,13 @@ const extension: IExtension = {
 
                         // set profile by priority SDANSA-446
                         const changeContentProfile = () => {
-                            if (priority && prevArticle.priority !== priority) {
+                            if (priority && latestRenderedArticle.priority !== priority) {
                                 const priorityToProfileConfig = appConfig?.ansa?.priority_to_profile_mapping ?? {};
                                 const profileFromConfig = priorityToProfileConfig[priority];
 
                                 if (
                                     profileFromConfig != null
-                                    && prevArticle.profile !== profileFromConfig
+                                    && latestRenderedArticle.profile !== profileFromConfig
                                 ) {
                                     exposed.loadContentProfile(profileFromConfig)
                                 }
@@ -77,7 +76,7 @@ const extension: IExtension = {
 
                         // only genre qCode is stored in fieldsData
                         const isSelected = (genreQCode: string) => genreQCode === genre;
-                        const wasSelected = (genreQCode: string) => prevArticle.genre.find((_genre) => _genre.qcode === genreQCode) != null;
+                        const wasSelected = (genreQCode: string) => latestRenderedArticle.genre.find((_genre) => _genre.qcode === genreQCode) != null;
 
                         if (!isEqual(genre, prevGenre)) {
                             const genres = ng.get('metadata').values.genre.concat();
