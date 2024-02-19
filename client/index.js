@@ -20,10 +20,6 @@ setTimeout(() => startApp(
             id: 'lineCountInAuthoringHeader',
             load: () => import('./extensions/lineCountInAuthoringHeader'),
         },
-        {
-            id: 'planning-extension',
-            load: () => import('superdesk-planning/client/planning-extension'),
-        },
     ],
     {},
     {
