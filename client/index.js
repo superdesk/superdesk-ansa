@@ -2,7 +2,25 @@ import {startApp} from 'superdesk-core/scripts/index';
 import ansaModule from './ansa';
 
 setTimeout(() => startApp(
-    [],
+    [
+        {
+            id: 'ansaIptc',
+            load: () => import('./extensions/ansaIptc'),
+        },
+        {
+            id: 'imageShortcuts',
+            load: () => import('./extensions/imageShortcuts'),
+        },
+
+        {
+            id: 'ansa-archive',
+            load: () => import('./extensions/ansa-archive'),
+        },
+        {
+            id: 'lineCountInAuthoringHeader',
+            load: () => import('./extensions/lineCountInAuthoringHeader'),
+        },
+    ],
     {},
     {
         countLines: (plainText, lineLength) =>
