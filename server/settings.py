@@ -97,8 +97,6 @@ LANGUAGES = [
     {"language": "cz", "label": "Czech", "source": True, "destination": True},
 ]
 
-GENERATE_SHORT_GUID = True
-
 ARCHIVE_AUTOCOMPLETE = True
 ARCHIVE_AUTOCOMPLETE_DAYS = 30
 KEYWORDS_ADD_MISSING_ON_PUBLISH = True
