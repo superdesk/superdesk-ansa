@@ -44,13 +44,14 @@ export function getWidgets(superdesk: ISuperdesk) {
                 }
 
                 if (getContentProfilePromise === undefined) {
-                    getContentProfilePromise = superdesk.entities.contentProfile.get(article.profile).then((profile) => {
-                        if ((profile.schema.hasOwnProperty(featureMediaField) || profile.schema.hasOwnProperty(galleryField))) {
-                            contentProfile = profile;
-                        }
-                        
-                        return profile;
-                    });
+                    getContentProfilePromise = Promise.resolve(superdesk.entities.contentProfile.get(article.profile))
+                        .then((profile) => {
+                            if ((profile.schema.hasOwnProperty(featureMediaField) || profile.schema.hasOwnProperty(galleryField))) {
+                                contentProfile = profile;
+                            }
+
+                            return profile;
+                        });
                 }
 
                 getContentProfilePromise.then(() => {

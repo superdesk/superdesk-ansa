@@ -28,9 +28,9 @@ const extension: IExtension = {
             contributions: {
                 iptcMapping: (data, item: IArticle) => Promise.all([
                     superdesk.entities.vocabulary.getIptcSubjects(),
-                    superdesk.entities.vocabulary.getVocabulary(PHOTO_CATEGORIES_ID),
                     superdesk.session.getCurrentUser(),
-                ]).then(([subjects, categories, user]: [Array<ISubject>, Array<ISubject>, IUser]) => {
+                ]).then(([subjects, user]: [Array<ISubject>, IUser]) => {
+                    const categories: Array<ISubject> = superdesk.entities.vocabulary.getVocabulary(PHOTO_CATEGORIES_ID).items;
                     const subjectReference = Array.isArray(data.SubjectReference) ? data.SubjectReference : [data.SubjectReference || ''];
                     const signOff = user.sign_off || user.username;
 
