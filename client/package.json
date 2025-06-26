@@ -11,7 +11,7 @@
         "lint": "eslint --ext .js --ext .jsx ansa"
     },
     "devDependencies": {
-        "@superdesk/build-tools": "^1.0.18",
+        "@superdesk/build-tools": "^1.0.19",
         "superdesk-code-style": "1.3.0"
     }
 }
