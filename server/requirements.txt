@@ -16,6 +16,8 @@ babel==2.17.0
     # via flask-babel
 bcrypt==4.2.1
     # via superdesk-core
+beautifulsoup4==4.5.3
+    # via -r requirements.in
 billiard==4.2.1
     # via celery
 blinker==1.9.0
