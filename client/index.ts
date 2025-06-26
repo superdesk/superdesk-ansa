@@ -11,7 +11,10 @@ setTimeout(() => startApp(
             id: 'imageShortcuts',
             load: () => import('./extensions/imageShortcuts'),
         },
-
+        {
+            id: 'planning-extension',
+            load: () => import('superdesk-planning/client/planning-extension'),
+        },
         {
             id: 'ansa-archive',
             load: () => import('./extensions/ansa-archive'),
@@ -30,4 +33,4 @@ setTimeout(() => startApp(
     },
 ));
 
-export default ansaModule;
+export default angular.module('main.superdesk', []);
