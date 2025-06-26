@@ -1,6 +1,5 @@
-beautifulsoup4==4.5.3
 gunicorn
 honcho
 
-git+https://github.com/superdesk/superdesk-core.git@hotfix/2.6.8#egg=superdesk-core
-git+https://github.com/superdesk/superdesk-planning.git@v2.6.2#egg=superdesk-planning
+git+https://github.com/superdesk/superdesk-core.git@release/2.9#egg=superdesk-core
+git+https://github.com/superdesk/superdesk-planning.git@release/2.9#egg=superdesk-planning
