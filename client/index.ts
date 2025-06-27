@@ -33,4 +33,4 @@ setTimeout(() => startApp(
     },
 ));
 
-export default angular.module('main.superdesk', []);
+export default ansaModule;
