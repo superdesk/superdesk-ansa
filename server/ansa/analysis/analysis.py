@@ -19,8 +19,8 @@ from superdesk.services import BaseService
 from ansa.geonames import get_place_by_id
 
 
-FORMAT_XML = "xml"
-FORMAT_JSON = "json"
+FORMAT_XML = "xmlexpert"
+FORMAT_JSON = "jsonexpert"
 SEMANTICS_SCHEMA = {
     'type': 'dict',
     'schema': {
@@ -169,7 +169,7 @@ class AnalysisService(BaseService):
     def do_analyse(self, doc):
         if self.URL_EXTRACTION is None:
             URL_MAIN = app.config["ANSA_ANALYSIS_URL"]
-            self.URL_EXTRACTION = URL_MAIN + "extractxsl.do"
+            self.URL_EXTRACTION = URL_MAIN
         extraction_data = {
             "abstract": doc.get('abstract', ''),
             "lang": doc.get('lang', 'ITA'),
