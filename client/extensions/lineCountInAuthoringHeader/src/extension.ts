@@ -7,7 +7,7 @@ const extension: IExtension = {
             contributions: {
                 authoringTopbar2Widgets: [{
                     component: getLineCountToolbarWidget(superdesk),
-                    availableOffline: false,
+                    availableOffline: true,
                     priority: 0.1,
                     group: 'end',
                 }],
