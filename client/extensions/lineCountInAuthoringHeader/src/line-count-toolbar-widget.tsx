@@ -6,15 +6,15 @@ export function getLineCountToolbarWidget(superdesk: ISuperdesk) {
     const {gettext, gettextPlural} = superdesk.localization;
     const {getLinesCount, stripHtmlTags} = superdesk.utilities;
 
-    return class LineCountToolbarWidget extends React.PureComponent<{article: IArticle}> {
+    return class LineCountToolbarWidget extends React.PureComponent<{entity: IArticle}> {
         render() {
-            const {article} = this.props;
+            const {entity} = this.props;
 
-            if (article.body_html == null) {
+            if (entity.body_html == null) {
                 return null;
             }
 
-            const linesCount = getLinesCount(stripHtmlTags(article.body_html));
+            const linesCount = getLinesCount(stripHtmlTags(entity.body_html));
 
             if (linesCount == null) {
                 return null;

@@ -2,7 +2,7 @@ import * as React from 'react';
 import {ISuperdesk, IArticle, IContentProfile} from "superdesk-api";
 
 interface IProps {
-    article: IArticle;
+    entity: IArticle;
 }
 
 interface IState {
@@ -78,7 +78,7 @@ export function getWidgets(superdesk: ISuperdesk) {
                 return null;
             }
 
-            if (this.props.article.type === 'picture') {
+            if (this.props.entity.type === 'picture') {
                 return (
                     <div>
                         {
@@ -87,7 +87,7 @@ export function getWidgets(superdesk: ISuperdesk) {
                                     <button
                                         title={gettext('add to photo gallery')}
                                         onClick={() => {
-                                            superdesk.ui.article.addImage(galleryField, this.props.article);
+                                            superdesk.ui.article.addImage(galleryField, this.props.entity);
                                         }}
                                     >
                                         <Icon className="icon-slideshow" size={22} />
@@ -102,7 +102,7 @@ export function getWidgets(superdesk: ISuperdesk) {
                                     <button
                                         title={gettext('add to featured media')}
                                         onClick={() => {
-                                            superdesk.ui.article.addImage(featureMediaField, this.props.article);
+                                            superdesk.ui.article.addImage(featureMediaField, this.props.entity);
                                         }}
                                     >
                                         <Icon className="icon-picture" size={22} />

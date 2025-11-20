@@ -5,7 +5,12 @@ const extension: IExtension = {
     activate: (superdesk: ISuperdesk) => {
         const result: IExtensionActivationResult = {
             contributions: {
-                authoringTopbar2Widgets: [getLineCountToolbarWidget(superdesk)],
+                authoringTopbar2Widgets: [{
+                    component: getLineCountToolbarWidget(superdesk),
+                    availableOffline: true,
+                    priority: 0.1,
+                    group: 'end',
+                }],
             },
         };
 
