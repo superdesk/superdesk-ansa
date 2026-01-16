@@ -8,6 +8,7 @@ from superdesk.text_utils import get_char_count
 from superdesk.signals import item_validate
 from ansa.constants import GALLERY
 from superdesk import get_resource_service
+from settings import HEADLINE_MAXLENGTH
 
 MASK_FIELD = "output_code"
 
@@ -147,7 +148,7 @@ def validate(sender, item, response, error_fields, **kwargs):
     if (
         item.get("headline")
         and re.search(r"\([0-9]+\)$", item["headline"])
-        and len(item["headline"]) <= 64
+        and len(item["headline"]) <= HEADLINE_MAXLENGTH
         and "HEADLINE is too long" in response
     ):
         response.remove("HEADLINE is too long")
