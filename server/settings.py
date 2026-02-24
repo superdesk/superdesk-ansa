@@ -316,3 +316,8 @@ PRIORITY_TO_PROFILE_MAPPING = {
 }
 
 HEADLINE_MAXLENGTH = 90
+
+# AUTHORING CONFIG
+
+# set send_to tab as the default opened tab in authoring actions
+AUTHORING_ACTIONS_DEFAULT_TAB = "send_to"
