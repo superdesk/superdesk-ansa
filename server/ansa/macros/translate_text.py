@@ -14,18 +14,34 @@ sess = requests.Session()
 
 
 def translate(text="", **kwargs):
-    URL_TRANSLATION = app.config["ANSA_TRANSLATION_URL"]
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    data = {"text": text, "lang": kwargs.get("lang", "en"), "target": kwargs.get("target", "it")}
+    DEEPL_URL = app.config["ANSA_TRANSLATION_URL"]
+    DEEPL_KEY = app.config["ANSA_TRANSLATION_KEY"]
 
     if not text:
         return text
 
+    source = kwargs.get("lang", "en").upper()
+    target = kwargs.get("target", "it").upper()
+
+    if source == target:
+        return text
+
+    headers = {
+        "Authorization": f"DeepL-Auth-Key {DEEPL_KEY}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    data = {
+        "text": text,
+        "source_lang": source,
+        "target_lang": target,
+    }
+
     try:
-        result = sess.post(URL_TRANSLATION, data=data, headers=headers, timeout=(5, 30))
-        response = json.loads(result.text)
-        return response.get("translatedtext", text)
-    except requests.exceptions.ReadTimeout:
+        result = sess.post(DEEPL_URL, data=data, headers=headers, timeout=(5, 30))
+        result.raise_for_status()
+        response = result.json()
+        return response["translations"][0]["text"]
+    except (requests.exceptions.RequestException, KeyError, IndexError):
         return text
 
 
