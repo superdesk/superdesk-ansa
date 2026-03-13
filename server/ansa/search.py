@@ -377,5 +377,4 @@ class AnsaPictureProvider(superdesk.SearchProvider):
         return app.media.get(rendition.get("media"))
 
 
-def init_app(app):
-    superdesk.register_search_provider("ansa", provider_class=AnsaPictureProvider)
+superdesk.register_search_provider("ansa", provider_class=AnsaPictureProvider)

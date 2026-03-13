@@ -211,6 +211,7 @@ function AnsaMetasearchItem(config, $http, $sce) {
 AnsaMetasearchItem.$inject = ['config', '$http', '$sce'];
 
 export function refreshAnalysis($scope, api, $rootScope, save) {
+    $scope.loadingSemantics = true;
     return api.save('analysis', {
         lang: $scope.item.language === 'en' ? 'ENG' : 'ITA',
         title: $scope.item.headline || '',
@@ -224,6 +225,8 @@ export function refreshAnalysis($scope, api, $rootScope, save) {
         saveSemantics($scope, result, save);
         $rootScope.$broadcast('semantics:update', result.semantics);
         return result.semantics;
+    }).finally(() => {
+        $scope.loadingSemantics = false;
     });
 }
 
@@ -234,8 +237,8 @@ let text = (val) => {
         return val || '';
     }
 };
-
 export function saveSemantics($scope, result, save) {
+
     $scope.item.semantics = result.semantics;
 
     if (result.place && isEmpty($scope.item.place)) {
@@ -277,10 +280,11 @@ export function saveSemantics($scope, result, save) {
 
 AnsaSemanticsCtrl.$inject = ['$scope', '$rootScope', 'api'];
 export function AnsaSemanticsCtrl($scope, $rootScope, api) {
+    $scope.loadingSemantics = false;
     let init = () => {
         if ($scope.item.semantics) {
             this.data = angular.extend({}, $scope.item.semantics);
-        } else {
+        } else if ($scope.itemActions?.edit === true) {
             refreshAnalysis($scope, api, $rootScope, true).then((result) => {
                 this.data = result;
             });
@@ -288,9 +292,19 @@ export function AnsaSemanticsCtrl($scope, $rootScope, api) {
     };
 
     this.remove = (term, category) => {
-        this.data[category] = without(this.data[category], term);
-        saveSemantics($scope, {semantics: this.data});
-        broadcast(this.data);
+        if ($scope.itemActions?.edit === true) {
+            this.data[category] = without(this.data[category], term);
+            saveSemantics($scope, {semantics: this.data});
+            broadcast(this.data);
+        }
+    };
+
+    this.refresh = () => {
+        if ($scope.itemActions?.edit === true) {
+            refreshAnalysis($scope, api, $rootScope, true).then((result) => {
+                this.data = result;
+            });
+        }
     };
 
     function broadcast(semantics) {
