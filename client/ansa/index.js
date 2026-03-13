@@ -280,6 +280,7 @@ export function saveSemantics($scope, result, save) {
 
 AnsaSemanticsCtrl.$inject = ['$scope', '$rootScope', 'api'];
 export function AnsaSemanticsCtrl($scope, $rootScope, api) {
+    $scope.loadingSemantics = false;
     let init = () => {
         if ($scope.item.semantics) {
             this.data = angular.extend({}, $scope.item.semantics);
