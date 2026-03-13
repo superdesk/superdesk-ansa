@@ -283,7 +283,7 @@ export function AnsaSemanticsCtrl($scope, $rootScope, api) {
     let init = () => {
         if ($scope.item.semantics) {
             this.data = angular.extend({}, $scope.item.semantics);
-        } else if ($scope.itemActions.edit === true) {
+        } else if ($scope.itemActions?.edit === true) {
             refreshAnalysis($scope, api, $rootScope, true).then((result) => {
                 this.data = result;
             });
@@ -291,7 +291,7 @@ export function AnsaSemanticsCtrl($scope, $rootScope, api) {
     };
 
     this.remove = (term, category) => {
-        if ($scope.itemActions.edit === true) {
+        if ($scope.itemActions?.edit === true) {
             this.data[category] = without(this.data[category], term);
             saveSemantics($scope, {semantics: this.data});
             broadcast(this.data);
@@ -299,7 +299,7 @@ export function AnsaSemanticsCtrl($scope, $rootScope, api) {
     };
 
     this.refresh = () => {
-        if ($scope.itemActions.edit === true) {
+        if ($scope.itemActions?.edit === true) {
             refreshAnalysis($scope, api, $rootScope, true).then((result) => {
                 this.data = result;
             });
