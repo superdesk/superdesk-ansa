@@ -140,6 +140,8 @@ class AnalysisResource(Resource):
         "text": {"type": "string", "required": True},
         "lang": {"type": "string", "required": False},
         "semantics": {"type": "dict", "readonly": True},
+        "subject": {"type": "list", "readonly": True},
+        "place": {"type": "list", "readonly": True},
     }
 
     resource_methods = ["POST"]
