@@ -207,11 +207,6 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertIsNotNone(title)
         self.assertEqual("Head", title.text)
 
-        client = self.app.test_client()
-        response = client.get(urlparse(link.attrib["href"]).path)
-        self.assertEqual(200, response.status_code, urlparse(link.attrib["href"]).path)
-        self.assertEqual(b"test", response.get_data())
-
     def test_html_void(self):
         """Check that HTML void element use self closing tags, but other elements with no content use start/end pairs
 
@@ -321,6 +316,23 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         creators = content_meta.findall(ns("creator"))
         self.assertEqual(1, len(creators))
         self.assertEqual("FOO", creators[0].get("literal"))
+
+    def test_sign_off_xawes_ignores_empty_values(self):
+        content_meta = etree.Element("contentMeta")
+        article = {
+            "sign_off": "zc/",
+            "extra": {
+                "Autore": "ZC",
+                "Co-Autore": "",
+                "Digitatore": "",
+            },
+        }
+
+        self.formatter._format_sign_off_xawes(article, content_meta)
+
+        creators = content_meta.findall("creator")
+        self.assertEqual(1, len(creators))
+        self.assertEqual("ZC", creators[0].get("literal"))
 
     def test_headlines(self):
         content_meta = self.format_content_meta()

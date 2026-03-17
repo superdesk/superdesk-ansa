@@ -281,13 +281,15 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
                 author = sd_sign_off
             xawes_sign_off = author
             try:
-                coauthor = get_text(extra["Co-Autore"])
-                xawes_sign_off += "-" + coauthor
+                coauthor = get_text(extra["Co-Autore"]).strip()
+                if coauthor:
+                    xawes_sign_off += "-" + coauthor
             except KeyError:
                 pass
             try:
-                digitator = get_text(extra["Digitatore"])
-                xawes_sign_off += "/" + digitator
+                digitator = get_text(extra["Digitatore"]).strip()
+                if digitator:
+                    xawes_sign_off += "/" + digitator
             except KeyError:
                 pass
             SubElement(
