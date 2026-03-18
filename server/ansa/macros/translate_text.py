@@ -64,7 +64,7 @@ def translate_text_macro(item, **kwargs):
             if field not in TEXT_FIELDS:  # needed for generate fields later
                 TEXT_FIELDS.append(field)
 
-    generate_fields(item, FIELDS, force=True)
+    generate_fields(item, FIELDS, reload=True)
 
     return item
 
