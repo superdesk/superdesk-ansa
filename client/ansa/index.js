@@ -645,21 +645,21 @@ export default angular.module('ansa.superdesk', [
             if (item.priority === 1) {
                 if (prev.priority !== 1 && !hasPlus) {
                     item.headline = flashLeft + headline + flashRight;
+                    updated = true;
                 } else if (prev.priority === 2 && hasPlus) {
                     item.headline = item.headline.replaceAll(bulletLeft, '').replaceAll(bulletRight, '');
                     item.headline = flashLeft + item.headline + flashRight;
+                    updated = true;
                 }
-
-                updated = true;
             } else if (item.priority === 2) {
                 if (prev.priority !== 2 && !hasPlus) {
                     item.headline = bulletLeft + headline + bulletRight;
+                    updated = true;
                 } else if (prev.priority === 1 && hasPlus) {
                     item.headline = item.headline.replaceAll(flashLeft, '').replaceAll(flashRight, '');
                     item.headline = bulletLeft + item.headline + bulletRight;
+                    updated = true;
                 }
-
-                updated = true;
             } else if (item.priority !== 2 && (prev.priority == null || prev.priority === 2 || prev.priority === 1) && hasPlus) {
                 item.headline = headline
                     .replace(flashRight, '')
