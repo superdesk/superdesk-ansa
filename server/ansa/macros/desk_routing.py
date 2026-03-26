@@ -31,9 +31,10 @@ def routing(item, desk=None, task=None, **kwargs):
             desk.get("name"),
             dest.get("name"),
         )
-        task.update({"desk": dest["_id"], "stage": dest.get("working_stage")})
+        task_update = {"desk": dest["_id"], "stage": dest.get("working_stage")}
+        task.update(task_update)
         # it has to update the item's task as well
-        item.setdefault("task", {}).update({"desk": dest["_id"], "stage": dest.get("working_stage")})
+        item.setdefault("task", {}).update(task_update)
     return item
 
 
