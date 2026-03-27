@@ -23,6 +23,7 @@ THUMB_HREF = "https://ansafoto.ansa.it/portaleimmagini/bdmproxy/{}.jpg?format=th
 VIEWIMG_HREF = "https://ansafoto.ansa.it/portaleimmagini/bdmproxy/{}.jpg?format=med&guid={}"
 
 TIMEOUT = (5, 25)
+VERIFY_SSL = False
 
 
 def get_meta(doc, field, multi=False):
@@ -159,7 +160,7 @@ class AnsaPictureProvider(superdesk.SearchProvider):
     def sess(self):
         if not hasattr(self, "_sess"):
             self._sess = requests.Session()
-            self._sess.get(ansa_photo_api("/portaleimmagini/"), timeout=TIMEOUT)  # get cookies
+            self._sess.get(ansa_photo_api("/portaleimmagini/"), timeout=TIMEOUT, verify=VERIFY_SSL)  # get cookies
         return self._sess
 
     def find(self, query):
@@ -216,7 +217,7 @@ class AnsaPictureProvider(superdesk.SearchProvider):
             pass
 
         set_default_search_operator(params)
-        response = self.sess.get(ansa_photo_api(SEARCH_ENDPOINT), params=params, timeout=TIMEOUT)
+        response = self.sess.get(ansa_photo_api(SEARCH_ENDPOINT), params=params, timeout=TIMEOUT, verify=VERIFY_SSL)
         return self._parse_items(response)
 
     def _parse_items(self, response, fetch=False):
@@ -243,6 +244,7 @@ class AnsaPictureProvider(superdesk.SearchProvider):
                 signoff = get_meta(doc, "authorCode")
             item = {
                 "type": "picture",
+                "state": "ingested",
                 "pubstatus": get_meta(doc, "status").replace("stat:", ""),
                 "_id": guid,
                 "guid": guid,
@@ -360,7 +362,7 @@ class AnsaPictureProvider(superdesk.SearchProvider):
             "changets": "true",
         }
 
-        response = self.sess.get(ansa_photo_api(DETAIL_ENDPOINT), params=params, timeout=TIMEOUT)
+        response = self.sess.get(ansa_photo_api(DETAIL_ENDPOINT), params=params, timeout=TIMEOUT, verify=VERIFY_SSL)
         items = self._parse_items(response, fetch=True)
         item = items[0]
 
