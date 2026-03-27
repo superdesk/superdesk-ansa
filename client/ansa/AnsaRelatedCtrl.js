@@ -112,8 +112,9 @@ export default function AnsaRelatedCtrl($scope, api, $rootScope, storage, Keys) 
         }})
             .then((response) => {
                 this.items = response._items.map((published) => Object.assign(
+                    {},
+                    published.archive_item || published,
                     {_type: published.archive_item ? 'archive' : 'published'},
-                    published.archive_item || published
                 ));
             }, (reason) => {
                 this.items = [];
@@ -137,11 +138,11 @@ export default function AnsaRelatedCtrl($scope, api, $rootScope, storage, Keys) 
         $scope.galleryField = galleryField;
 
         $scope.$watch('item', (item) => {
-            $scope.contentProfile = null;
-
-            window['__private_ansa__get_content_profile'](item.profile).then((contentProfile) => {
-                $scope.contentProfile = contentProfile;
-            });
+            if (item != null) {
+                $scope.contentProfile = window['__private_ansa__get_content_profile'](item.profile) || null;
+            } else {
+                $scope.contentProfile = null;
+            }
         });
     });
 }
