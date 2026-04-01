@@ -43,6 +43,11 @@ module.exports = function() {
             preview: {
                 hideContentLabels: true,
             },
+            panels: {
+                publish: {
+                    allowSeconds: true,
+                },
+            },
         },
 
         language: 'it',
