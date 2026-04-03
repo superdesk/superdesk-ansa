@@ -57,7 +57,7 @@ def move_picture_to_desk(item, desk=None, task=None, **kwargs):
         dest_desk_name,
     )
 
-    task_update = {"desk": dest_desk["_id"], "stage": dest_desk.get("incoming_stage")}
+    task_update = {"desk": dest_desk["_id"], "stage": dest_desk.get("working_stage")}
     task.update(task_update)
     item.setdefault("task", {}).update(task_update)
 
