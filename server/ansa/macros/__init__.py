@@ -16,3 +16,4 @@ import ansa.macros.schedule_0700  # noqa
 import ansa.macros.schedule_0730  # noqa
 
 import ansa.macros.set_profile_sms  # noqa
+import ansa.macros.move_picture_to_desk  # noqa
