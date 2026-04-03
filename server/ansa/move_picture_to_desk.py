@@ -21,7 +21,11 @@ def get_destination_desk():
     return None
 
 
-def move_picture_handler(sender, item, **kwargs):
+def on_item_create(sender, item, **kwargs):
+    """Move picture to destination desk right when it's being created.
+
+    Fires before the item is saved to DB, so we modify the task in-place.
+    """
     if item.get("type") != "picture":
         return
 
@@ -35,25 +39,17 @@ def move_picture_handler(sender, item, **kwargs):
     if current_desk_id == dest_desk_id:
         return
 
-    dest_stage_id = dest_desk.get("working_stage")
     logger.info(
         'move_picture_to_desk: moving picture "%s" to desk "%s"',
         item.get("headline") or item.get("slugline") or item.get("_id"),
         dest_desk.get("name"),
     )
 
-    updates = {
-        "task": {
-            "desk": dest_desk["_id"],
-            "stage": dest_stage_id,
-        }
-    }
-
-    get_resource_service("archive").system_update(
-        item[superdesk.config.ID_FIELD], updates, item
-    )
+    item.setdefault("task", {}).update({
+        "desk": dest_desk["_id"],
+        "stage": dest_desk.get("working_stage"),
+    })
 
 
 def init_app(app):
-    superdesk.item_fetched.connect(move_picture_handler)
-    superdesk.item_moved.connect(move_picture_handler)
+    superdesk.item_create.connect(on_item_create)
