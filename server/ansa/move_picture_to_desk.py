@@ -58,9 +58,9 @@ def on_item_update(sender, updates, original, **kwargs):
         _move_associated_picture(assoc, desk_id)
 
 
-def on_item_publish(sender, item, updates, **kwargs):
+def on_item_publish(sender, item, updates=None, **kwargs):
     """Move picture to photo archive stage when published from personal space."""
-    if item.get("type") != "picture":
+    if not updates or item.get("type") != "picture":
         return
     picture_id = item.get("_id")
     if not picture_id:
