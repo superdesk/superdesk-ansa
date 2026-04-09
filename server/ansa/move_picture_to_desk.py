@@ -31,6 +31,8 @@ def on_item_create(sender, item, **kwargs):
 
 def on_item_update(sender, updates, original, **kwargs):
     """Move picture when it's added as an association to an article."""
+    if not original.get("task", {}).get("desk"):
+        return
     new_associations = updates.get("associations") or {}
     old_associations = original.get("associations") or {}
     for key, assoc in new_associations.items():
@@ -44,6 +46,9 @@ def on_item_update(sender, updates, original, **kwargs):
 
 def _move_picture_in_place(item):
     """Move a picture item by modifying its task in-place (before DB save)."""
+    if not item.get("task", {}).get("desk"):
+        return
+
     dest_desk = get_destination_desk()
     if not dest_desk:
         return
