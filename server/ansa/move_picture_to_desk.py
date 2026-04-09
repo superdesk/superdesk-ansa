@@ -38,13 +38,34 @@ def on_item_update(sender, updates, original, **kwargs):
 
 
 def on_item_publish(sender, item, updates, **kwargs):
-    """Move pictures when article is published from personal space."""
-    if item.get("task", {}).get("desk"):
+    """Move picture to destination desk when it's published from personal space."""
+    if item.get("type") != "picture":
         return
-    associations = item.get("associations") or {}
-    for key, assoc in associations.items():
-        if assoc and assoc.get("type") == "picture":
-            _move_associated_picture(assoc)
+    # check the actual picture in archive, not the merged item
+    picture_id = item.get("_id")
+    if not picture_id:
+        return
+    archive_service = get_resource_service("archive")
+    picture = archive_service.find_one(req=None, _id=picture_id)
+    if not picture or picture.get("task", {}).get("desk"):
+        return
+
+    dest_desk = get_destination_desk()
+    if not dest_desk:
+        return
+
+    logger.info(
+        'move_picture_to_desk: moving picture "%s" to desk "%s" on publish',
+        picture_id,
+        dest_desk.get("name"),
+    )
+
+    updates.setdefault("task", {}).update(
+        {
+            "desk": dest_desk["_id"],
+            "stage": dest_desk.get("working_stage"),
+        }
+    )
 
 
 def _move_new_picture_associations(updates, original, move_existing=False):
