@@ -31,7 +31,8 @@ def on_item_create(sender, item, **kwargs):
 
 def on_item_update(sender, updates, original, **kwargs):
     """Move picture when it's added as an association to an article."""
-    if not original.get("task", {}).get("desk"):
+    from_personal = not original.get("task", {}).get("desk") and updates.get("task", {}).get("desk")
+    if not original.get("task", {}).get("desk") and not from_personal:
         return
     new_associations = updates.get("associations") or {}
     old_associations = original.get("associations") or {}
@@ -40,6 +41,8 @@ def on_item_update(sender, updates, original, **kwargs):
             continue
         old_assoc = old_associations.get(key)
         if old_assoc and old_assoc.get("_id") == assoc.get("_id"):
+            if from_personal:
+                _move_associated_picture(assoc)
             continue
         _move_associated_picture(assoc)
 
