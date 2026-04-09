@@ -2,7 +2,7 @@ import logging
 
 import superdesk
 from superdesk import get_resource_service
-from superdesk.signals import item_update
+from superdesk.signals import item_update, item_publish
 
 
 VOCABULARY_ID = "move_picture_destination"
@@ -34,6 +34,20 @@ def on_item_update(sender, updates, original, **kwargs):
     from_personal = not original.get("task", {}).get("desk") and updates.get("task", {}).get("desk")
     if not original.get("task", {}).get("desk") and not from_personal:
         return
+    _move_new_picture_associations(updates, original, move_existing=from_personal)
+
+
+def on_item_publish(sender, item, updates, **kwargs):
+    """Move pictures when article is published from personal space."""
+    if item.get("task", {}).get("desk"):
+        return
+    associations = item.get("associations") or {}
+    for key, assoc in associations.items():
+        if assoc and assoc.get("type") == "picture":
+            _move_associated_picture(assoc)
+
+
+def _move_new_picture_associations(updates, original, move_existing=False):
     new_associations = updates.get("associations") or {}
     old_associations = original.get("associations") or {}
     for key, assoc in new_associations.items():
@@ -41,7 +55,7 @@ def on_item_update(sender, updates, original, **kwargs):
             continue
         old_assoc = old_associations.get(key)
         if old_assoc and old_assoc.get("_id") == assoc.get("_id"):
-            if from_personal:
+            if move_existing:
                 _move_associated_picture(assoc)
             continue
         _move_associated_picture(assoc)
@@ -113,3 +127,4 @@ def _move_associated_picture(assoc):
 def init_app(app):
     superdesk.item_create.connect(on_item_create)
     item_update.connect(on_item_update)
+    item_publish.connect(on_item_publish)
