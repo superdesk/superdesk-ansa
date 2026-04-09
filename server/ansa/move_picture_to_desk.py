@@ -5,43 +5,63 @@ from superdesk import get_resource_service
 from superdesk.signals import item_update, item_publish
 
 
-VOCABULARY_ID = "move_picture_destination"
+VOCABULARY_ID = "move_picture_stage"
 
 logger = logging.getLogger(__name__)
 
 
-def get_destination_desk():
+def get_picture_stage_name():
     vocab = get_resource_service("vocabularies").find_one(req=None, _id=VOCABULARY_ID)
     if not vocab or not vocab.get("items"):
         return None
     for item in vocab["items"]:
         if item.get("is_active"):
-            desk_name = item.get("name")
-            if desk_name:
-                return get_resource_service("desks").find_one(req=None, name=desk_name)
+            return item.get("name")
+    return None
+
+
+def find_stage_by_name(desk_id, stage_name):
+    stages = get_resource_service("stages").get(req=None, lookup={"desk": desk_id, "name": stage_name})
+    for stage in stages:
+        return stage
     return None
 
 
 def on_item_create(sender, item, **kwargs):
-    """Move picture to destination desk when it's being created."""
+    """Move picture to photo archive stage when it's created on a desk."""
     if item.get("type") != "picture":
         return
-    _move_picture_in_place(item)
+    desk_id = item.get("task", {}).get("desk")
+    if not desk_id:
+        return
+    _set_picture_stage(item, desk_id)
 
 
 def on_item_update(sender, updates, original, **kwargs):
-    """Move picture when it's added as an association to an article."""
+    """Move picture when it's added as an association to an article on a desk."""
     from_personal = not original.get("task", {}).get("desk") and updates.get("task", {}).get("desk")
     if not original.get("task", {}).get("desk") and not from_personal:
         return
-    _move_new_picture_associations(updates, original, move_existing=from_personal)
+
+    desk_id = original.get("task", {}).get("desk") or updates.get("task", {}).get("desk")
+    new_associations = updates.get("associations") or {}
+    old_associations = original.get("associations") or {}
+
+    for key, assoc in new_associations.items():
+        if not assoc or assoc.get("type") != "picture":
+            continue
+        old_assoc = old_associations.get(key)
+        if old_assoc and old_assoc.get("_id") == assoc.get("_id"):
+            if from_personal:
+                _move_associated_picture(assoc, desk_id)
+            continue
+        _move_associated_picture(assoc, desk_id)
 
 
 def on_item_publish(sender, item, updates, **kwargs):
-    """Move picture to destination desk when it's published from personal space."""
+    """Move picture to photo archive stage when published from personal space."""
     if item.get("type") != "picture":
         return
-    # check the actual picture in archive, not the merged item
     picture_id = item.get("_id")
     if not picture_id:
         return
@@ -50,75 +70,73 @@ def on_item_publish(sender, item, updates, **kwargs):
     if not picture or picture.get("task", {}).get("desk"):
         return
 
-    dest_desk = get_destination_desk()
-    if not dest_desk:
+    stage_name = get_picture_stage_name()
+    if not stage_name:
+        return
+
+    # find the desk from updates (article publish sets the desk)
+    desk_id = updates.get("task", {}).get("desk")
+    if not desk_id:
+        desk_id = item.get("task", {}).get("desk")
+    if not desk_id:
+        return
+
+    stage = find_stage_by_name(desk_id, stage_name)
+    if not stage:
         return
 
     logger.info(
-        'move_picture_to_desk: moving picture "%s" to desk "%s" on publish',
+        'move_picture_to_desk: moving picture "%s" to stage "%s" on publish',
         picture_id,
-        dest_desk.get("name"),
+        stage_name,
     )
 
     updates.setdefault("task", {}).update(
         {
-            "desk": dest_desk["_id"],
-            "stage": dest_desk.get("working_stage"),
+            "desk": desk_id,
+            "stage": stage["_id"],
         }
     )
 
 
-def _move_new_picture_associations(updates, original, move_existing=False):
-    new_associations = updates.get("associations") or {}
-    old_associations = original.get("associations") or {}
-    for key, assoc in new_associations.items():
-        if not assoc or assoc.get("type") != "picture":
-            continue
-        old_assoc = old_associations.get(key)
-        if old_assoc and old_assoc.get("_id") == assoc.get("_id"):
-            if move_existing:
-                _move_associated_picture(assoc)
-            continue
-        _move_associated_picture(assoc)
-
-
-def _move_picture_in_place(item):
-    """Move a picture item by modifying its task in-place (before DB save)."""
-    if not item.get("task", {}).get("desk"):
+def _set_picture_stage(item, desk_id):
+    """Set picture's stage in-place before DB save."""
+    stage_name = get_picture_stage_name()
+    if not stage_name:
         return
 
-    dest_desk = get_destination_desk()
-    if not dest_desk:
+    stage = find_stage_by_name(desk_id, stage_name)
+    if not stage:
         return
 
-    current_desk_id = str(item.get("task", {}).get("desk") or "")
-    dest_desk_id = str(dest_desk["_id"])
-
-    if current_desk_id == dest_desk_id:
+    if str(item.get("task", {}).get("stage") or "") == str(stage["_id"]):
         return
 
     logger.info(
-        'move_picture_to_desk: moving picture "%s" to desk "%s"',
+        'move_picture_to_desk: setting picture "%s" to stage "%s"',
         item.get("headline") or item.get("slugline") or item.get("_id"),
-        dest_desk.get("name"),
+        stage_name,
     )
 
     item.setdefault("task", {}).update(
         {
-            "desk": dest_desk["_id"],
-            "stage": dest_desk.get("working_stage"),
+            "stage": stage["_id"],
         }
     )
 
 
-def _move_associated_picture(assoc):
-    """Move an already-existing picture item via system_update."""
-    dest_desk = get_destination_desk()
-    if not dest_desk:
+def _move_associated_picture(assoc, desk_id):
+    """Move an already-existing picture to the photo archive stage via system_update."""
+    stage_name = get_picture_stage_name()
+    if not stage_name:
         return
 
     picture_id = assoc.get("_id")
     if not picture_id:
+        return
+
+    stage = find_stage_by_name(desk_id, stage_name)
+    if not stage:
         return
 
     archive_service = get_resource_service("archive")
@@ -126,21 +144,18 @@ def _move_associated_picture(assoc):
     if not picture:
         return
 
-    current_desk_id = str(picture.get("task", {}).get("desk") or "")
-    dest_desk_id = str(dest_desk["_id"])
-
-    if current_desk_id == dest_desk_id:
+    if str(picture.get("task", {}).get("stage") or "") == str(stage["_id"]):
         return
 
     logger.info(
-        'move_picture_to_desk: moving associated picture "%s" to desk "%s"',
+        'move_picture_to_desk: moving associated picture "%s" to stage "%s"',
         picture_id,
-        dest_desk.get("name"),
+        stage_name,
     )
 
     archive_service.system_update(
         picture_id,
-        {"task": {"desk": dest_desk["_id"], "stage": dest_desk.get("working_stage")}},
+        {"task": {"desk": desk_id, "stage": stage["_id"]}},
         picture,
     )
 
