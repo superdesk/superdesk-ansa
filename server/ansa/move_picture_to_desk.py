@@ -80,44 +80,22 @@ def on_item_update(sender, updates, original, **kwargs):
 
 
 def on_item_publish(sender, item, updates=None, **kwargs):
-    """Move picture to photo archive stage when published from personal space."""
-    if not updates or item.get("type") != "picture":
-        return
-    picture_id = item.get("_id")
-    if not picture_id:
-        return
-    archive_service = get_resource_service("archive")
-    picture = archive_service.find_one(req=None, _id=picture_id)
-    if not picture or picture.get("task", {}).get("desk"):
+    """When article is published from personal space, move associated pictures to the configured stage."""
+    if not updates:
         return
 
-    stage_name = get_picture_stage_name()
-    if not stage_name:
+    # only handle articles published from personal space
+    if item.get("task", {}).get("desk"):
         return
 
-    # find the desk from updates (article publish sets the desk)
     desk_id = updates.get("task", {}).get("desk")
-    if not desk_id:
-        desk_id = item.get("task", {}).get("desk")
     if not desk_id or not is_desk_enabled(desk_id):
         return
 
-    stage = find_stage_by_name(desk_id, stage_name)
-    if not stage:
-        return
-
-    logger.info(
-        'move_picture_to_desk: moving picture "%s" to stage "%s" on publish',
-        picture_id,
-        stage_name,
-    )
-
-    updates.setdefault("task", {}).update(
-        {
-            "desk": desk_id,
-            "stage": stage["_id"],
-        }
-    )
+    associations = item.get("associations") or {}
+    for key, assoc in associations.items():
+        if assoc and assoc.get("type") == "picture" and assoc.get("_id"):
+            _move_associated_picture(assoc, desk_id)
 
 
 def _set_picture_stage(item, desk_id):
