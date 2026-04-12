@@ -2,7 +2,7 @@ import logging
 
 import superdesk
 from superdesk import get_resource_service
-from superdesk.signals import item_update, item_publish
+from superdesk.signals import item_update
 
 
 STAGE_VOCABULARY_ID = "move_picture_stage"
@@ -58,13 +58,10 @@ def on_item_create(sender, item, **kwargs):
 
 def on_item_update(sender, updates, original, **kwargs):
     """Move picture when it's added as an association to an article on a desk."""
-    from_personal = not original.get("task", {}).get("desk") and updates.get("task", {}).get("desk")
-    if not original.get("task", {}).get("desk") and not from_personal:
+    desk_id = original.get("task", {}).get("desk")
+    if not desk_id or not is_desk_enabled(desk_id):
         return
 
-    desk_id = original.get("task", {}).get("desk") or updates.get("task", {}).get("desk")
-    if not is_desk_enabled(desk_id):
-        return
     new_associations = updates.get("associations") or {}
     old_associations = original.get("associations") or {}
 
@@ -73,30 +70,8 @@ def on_item_update(sender, updates, original, **kwargs):
             continue
         old_assoc = old_associations.get(key)
         if old_assoc and old_assoc.get("_id") == assoc.get("_id"):
-            if from_personal:
-                _move_associated_picture(assoc, desk_id)
             continue
         _move_associated_picture(assoc, desk_id)
-
-
-def on_item_publish(sender, item, updates=None, **kwargs):
-    """When article is published from personal space, move associated pictures to the configured stage."""
-    if not updates or not item.get("_id"):
-        return
-
-    # check the original article in DB to see if it was in personal space
-    original = get_resource_service("archive").find_one(req=None, _id=item["_id"])
-    if not original or original.get("task", {}).get("desk"):
-        return
-
-    desk_id = updates.get("task", {}).get("desk") or item.get("task", {}).get("desk")
-    if not desk_id or not is_desk_enabled(desk_id):
-        return
-
-    associations = item.get("associations") or {}
-    for key, assoc in associations.items():
-        if assoc and assoc.get("type") == "picture" and assoc.get("_id"):
-            _move_associated_picture(assoc, desk_id)
 
 
 def _set_picture_stage(item, desk_id):
@@ -163,4 +138,3 @@ def _move_associated_picture(assoc, desk_id):
 def init_app(app):
     superdesk.item_create.connect(on_item_create)
     item_update.connect(on_item_update)
-    item_publish.connect(on_item_publish)
