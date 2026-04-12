@@ -57,8 +57,12 @@ def move_associated_pictures_from_personal_space(updates, original):
     if original and original.get("task", {}).get("desk"):
         return
 
-    # get the target desk from updates
+    # get the target desk - read from request args since set_desk hasn't run yet
+    from flask import request
+
     desk_id = updates.get("task", {}).get("desk")
+    if not desk_id and request and request.args:
+        desk_id = request.args.get("desk_id")
     if not desk_id:
         return
 
@@ -88,10 +92,9 @@ def move_associated_pictures_from_personal_space(updates, original):
             continue
 
         # skip if already on this desk/stage
-        if (
-            str(picture.get("task", {}).get("desk") or "") == str(desk_id)
-            and str(picture.get("task", {}).get("stage") or "") == str(stage["_id"])
-        ):
+        if str(picture.get("task", {}).get("desk") or "") == str(desk_id) and str(
+            picture.get("task", {}).get("stage") or ""
+        ) == str(stage["_id"]):
             continue
 
         logger.info(
