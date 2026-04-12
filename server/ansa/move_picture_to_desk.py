@@ -81,14 +81,15 @@ def on_item_update(sender, updates, original, **kwargs):
 
 def on_item_publish(sender, item, updates=None, **kwargs):
     """When article is published from personal space, move associated pictures to the configured stage."""
-    if not updates:
+    if not updates or not item.get("_id"):
         return
 
-    # only handle articles published from personal space
-    if item.get("task", {}).get("desk"):
+    # check the original article in DB to see if it was in personal space
+    original = get_resource_service("archive").find_one(req=None, _id=item["_id"])
+    if not original or original.get("task", {}).get("desk"):
         return
 
-    desk_id = updates.get("task", {}).get("desk")
+    desk_id = updates.get("task", {}).get("desk") or item.get("task", {}).get("desk")
     if not desk_id or not is_desk_enabled(desk_id):
         return
 
