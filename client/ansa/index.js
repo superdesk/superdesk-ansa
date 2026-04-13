@@ -241,6 +241,13 @@ export function saveSemantics($scope, result, save) {
 
     $scope.item.semantics = result.semantics;
 
+    // Function is used in Related items and Semantics widget both.
+    // In the Related items widget, we don't modify semantics data, we only need it for
+    // further processing. Thus we don't need to save it on the article.
+    if (save === false) {
+        return;
+    }
+
     if (result.place && isEmpty($scope.item.place)) {
         $scope.item.place = result.place;
     }
@@ -270,12 +277,7 @@ export function saveSemantics($scope, result, save) {
         $scope.item.keywords = result.keywords;
     }
 
-    // Function is used in Related items and Semantics widget both.
-    // In the Related items widget, we don't modify semantics data, we only need it for
-    // further processing. Thus we don't need to save it on the article.
-    if (save) {
-        $scope.save();
-    }
+    $scope.save();
 }
 
 AnsaSemanticsCtrl.$inject = ['$scope', '$rootScope', 'api'];
