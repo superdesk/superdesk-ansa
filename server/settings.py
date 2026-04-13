@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "ansa.formatters",
     "ansa.routing",
     "ansa.stage_auto_publishing",
+    "ansa.move_picture_to_desk",
     "ansa.update_signal",
     "ansa.validate",
     "ansa.save_iptc",

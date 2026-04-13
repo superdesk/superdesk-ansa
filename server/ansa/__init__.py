@@ -18,6 +18,7 @@ def on_update(resource, updates, original):
 
 def on_publish(updates, original):
     assign_product_to_pictures(updates, original)
+    move_associated_pictures_from_personal_space(updates, original)
 
 
 def assign_product_to_pictures(updates, original):
@@ -43,6 +44,71 @@ def assign_product_to_pictures(updates, original):
         item["auto_publish"] = True
         if original:
             original.setdefault("associations", {}).update({key: item})
+
+
+def move_associated_pictures_from_personal_space(updates, original):
+    """When publishing from personal space, move associated pictures to the target desk.
+
+    Pictures are moved to the stage defined in move_picture_stage vocabulary.
+    """
+    from .move_picture_to_desk import get_picture_stage_name, find_stage_by_name, is_desk_enabled
+
+    # only handle personal space (no desk on original)
+    if original and original.get("task", {}).get("desk"):
+        return
+
+    # get the target desk - read from request args since set_desk hasn't run yet
+    from flask import request
+
+    desk_id = updates.get("task", {}).get("desk")
+    if not desk_id and request and request.args:
+        desk_id = request.args.get("desk_id")
+    if not desk_id or not is_desk_enabled(desk_id):
+        return
+
+    stage_name = get_picture_stage_name()
+    if not stage_name:
+        return
+
+    stage = find_stage_by_name(desk_id, stage_name)
+    if not stage:
+        return
+
+    associations = updates.get("associations") or original.get("associations") or {}
+    archive_service = superdesk.get_resource_service("archive")
+
+    for key, assoc in associations.items():
+        if not assoc or assoc.get("type") != "picture":
+            continue
+        if assoc.get("state") in PUBLISH_STATES:
+            continue
+
+        picture_id = assoc.get("_id")
+        if not picture_id:
+            continue
+
+        picture = archive_service.find_one(req=None, _id=picture_id)
+        if not picture:
+            continue
+
+        # skip if already on this desk/stage
+        if str(picture.get("task", {}).get("desk") or "") == str(desk_id) and str(
+            picture.get("task", {}).get("stage") or ""
+        ) == str(stage["_id"]):
+            continue
+
+        logger.info(
+            'move_associated_pictures_from_personal_space: moving picture "%s" to desk "%s" stage "%s"',
+            picture_id,
+            desk_id,
+            stage_name,
+        )
+
+        archive_service.system_update(
+            picture_id,
+            {"task": {"desk": desk_id, "stage": stage["_id"]}},
+            picture,
+        )
 
 
 def udpate_sign_off(sender, item, **kwargs):
