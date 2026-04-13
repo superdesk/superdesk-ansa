@@ -53,15 +53,8 @@ def move_associated_pictures_from_personal_space(updates, original):
     """
     from .move_picture_to_desk import get_picture_stage_name, find_stage_by_name, is_desk_enabled
 
-    logger.info(
-        "move_pictures_from_personal: original task=%s, updates task=%s",
-        original.get("task") if original else None,
-        updates.get("task"),
-    )
-
     # only handle personal space (no desk on original)
     if original and original.get("task", {}).get("desk"):
-        logger.info("move_pictures_from_personal: skipping - original already has desk")
         return
 
     # get the target desk - read from request args since set_desk hasn't run yet
@@ -70,26 +63,18 @@ def move_associated_pictures_from_personal_space(updates, original):
     desk_id = updates.get("task", {}).get("desk")
     if not desk_id and request and request.args:
         desk_id = request.args.get("desk_id")
-    logger.info("move_pictures_from_personal: desk_id=%s", desk_id)
-    if not desk_id:
-        logger.info("move_pictures_from_personal: skipping - no desk_id")
-        return
-    if not is_desk_enabled(desk_id):
-        logger.info("move_pictures_from_personal: skipping - desk not enabled")
+    if not desk_id or not is_desk_enabled(desk_id):
         return
 
     stage_name = get_picture_stage_name()
-    logger.info("move_pictures_from_personal: stage_name=%s", stage_name)
     if not stage_name:
         return
 
     stage = find_stage_by_name(desk_id, stage_name)
-    logger.info("move_pictures_from_personal: stage=%s", stage)
     if not stage:
         return
 
     associations = updates.get("associations") or original.get("associations") or {}
-    logger.info("move_pictures_from_personal: associations keys=%s", list(associations.keys()))
     archive_service = superdesk.get_resource_service("archive")
 
     for key, assoc in associations.items():

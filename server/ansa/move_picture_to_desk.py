@@ -3,6 +3,7 @@ import logging
 import superdesk
 from superdesk import get_resource_service
 from superdesk.signals import item_update
+from apps.content import push_content_notification
 
 
 STAGE_VOCABULARY_ID = "move_picture_stage"
@@ -128,11 +129,12 @@ def _move_associated_picture(assoc, desk_id):
         stage_name,
     )
 
-    archive_service.system_update(
-        picture_id,
-        {"task": {"desk": desk_id, "stage": stage["_id"]}},
-        picture,
-    )
+    updates = {"task": {"desk": desk_id, "stage": stage["_id"]}}
+    archive_service.system_update(picture_id, updates, picture)
+
+    updated = picture.copy()
+    updated.update(updates)
+    push_content_notification([picture, updated])
 
 
 def init_app(app):
