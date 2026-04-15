@@ -4,16 +4,15 @@ import superdesk
 from superdesk import get_resource_service
 from superdesk.signals import item_update
 from apps.content import push_content_notification
-
-
-STAGE_VOCABULARY_ID = "move_picture_stage"
-DESKS_VOCABULARY_ID = "move_picture_desks"
+from flask import current_app
 
 logger = logging.getLogger(__name__)
 
 
 def get_picture_stage_name():
-    vocab = get_resource_service("vocabularies").find_one(req=None, _id=STAGE_VOCABULARY_ID)
+    vocab = get_resource_service("vocabularies").find_one(
+        req=None, _id=current_app.config.get("MOVE_PICTURE_STAGE_VOCABULARY_ID", "move_picture_stage")
+    )
     if not vocab or not vocab.get("items"):
         return None
     for item in vocab["items"]:
@@ -28,7 +27,9 @@ def is_desk_enabled(desk_id):
     If move_picture_desks vocabulary has no active items, all desks are enabled.
     Otherwise, only desks whose name matches an active item are enabled.
     """
-    vocab = get_resource_service("vocabularies").find_one(req=None, _id=DESKS_VOCABULARY_ID)
+    vocab = get_resource_service("vocabularies").find_one(
+        req=None, _id=current_app.config.get("MOVE_PICTURE_DESKS_VOCABULARY_ID", "move_picture_desks")
+    )
     if not vocab or not vocab.get("items"):
         return True
     active_names = [item.get("name") for item in vocab["items"] if item.get("is_active") and item.get("name")]
