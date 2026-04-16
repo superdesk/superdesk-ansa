@@ -1,7 +1,7 @@
 import logging
 import superdesk
 
-from superdesk.signals import item_publish
+from superdesk.signals import item_publish, item_moved
 from superdesk.metadata.item import PUBLISH_STATES
 
 from .constants import PRODUCTS_ID
@@ -111,6 +111,65 @@ def move_associated_pictures_from_personal_space(updates, original):
         )
 
 
+def on_item_moved(sender, item, original, **kwargs):
+    """When an article is sent from personal space, send associated pictures to the same desk.
+
+    Pictures are moved to the stage defined in move_picture_stage vocabulary,
+    if the desk is enabled in move_picture_desks vocabulary.
+    """
+    from .move_picture_to_desk import get_picture_stage_name, find_stage_by_name, is_desk_enabled
+
+    # only handle send from personal space (original had no desk)
+    if original.get("task", {}).get("desk"):
+        return
+
+    desk_id = item.get("task", {}).get("desk")
+    if not desk_id or not is_desk_enabled(desk_id):
+        return
+
+    stage_name = get_picture_stage_name()
+    if not stage_name:
+        return
+
+    stage = find_stage_by_name(desk_id, stage_name)
+    if not stage:
+        return
+
+    associations = item.get("associations") or {}
+    archive_service = superdesk.get_resource_service("archive")
+
+    for key, assoc in associations.items():
+        if not assoc or assoc.get("type") != "picture":
+            continue
+
+        picture_id = assoc.get("_id")
+        if not picture_id:
+            continue
+
+        picture = archive_service.find_one(req=None, _id=picture_id)
+        if not picture:
+            continue
+
+        # skip if already on this desk/stage
+        if str(picture.get("task", {}).get("desk") or "") == str(desk_id) and str(
+            picture.get("task", {}).get("stage") or ""
+        ) == str(stage["_id"]):
+            continue
+
+        logger.info(
+            'on_item_moved: sending picture "%s" to desk "%s" stage "%s"',
+            picture_id,
+            desk_id,
+            stage_name,
+        )
+
+        archive_service.system_update(
+            picture_id,
+            {"task": {"desk": desk_id, "stage": stage["_id"]}},
+            picture,
+        )
+
+
 def udpate_sign_off(sender, item, **kwargs):
     """When item is auto published add -RED to sign_off."""
     if item.get("auto_publish"):
@@ -127,6 +186,7 @@ def init_app(app):
 
     app.on_update += on_update
     item_publish.connect(udpate_sign_off)
+    item_moved.connect(on_item_moved)
 
     priority_to_profile_mapping = {}
     for key, val in app.config["PRIORITY_TO_PROFILE_MAPPING"].items():
