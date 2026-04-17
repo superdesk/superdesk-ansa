@@ -10,10 +10,10 @@ const parseDate = (date: string) => {
     return date.replace(/:/g, '-');
 };
 
-// convert 152339+0000 to 15:23:39+0000
+// convert 152339+0000 or 15:23:39+01:00 to 15:23:39+0100
 const parseTime = (time: string) => {
     if (time.includes(':')) {
-        return time;
+        return time.replace(/([+-]\d{2}):(\d{2})$/, '$1$2');
     }
     return [time.substr(0, 2), time.substr(2, 2), time.substr(4)].join(':');
 };
