@@ -122,7 +122,7 @@ class PictureParser(ImageIPTCFeedParser):
     def parse_date_time(self, date, time):
         if not date or not time:
             return
-        date_string = "{}T{}".format(date.replace(":", "-"), time)
+        date_string = "{}T{}".format(date, time)
         for _format in [EXIF_DATETIME_FORMAT, ANSA_DATETIME_FORMAT]:
             try:
                 return datetime.strptime(date_string, _format)
