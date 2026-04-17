@@ -2,21 +2,21 @@ import {IExtension, IExtensionActivationResult, ISuperdesk, IArticle, ISubject, 
 
 const PHOTO_CATEGORIES_ID = 'PhotoCategories';
 
-// convert 20191209 to 2019-12-09
-const parseDate = (date: string) => date.length === 8 ?
-    [
-        date.substr(0, 4),
-        date.substr(4, 2),
-        date.substr(6, 2),
-    ].join('-') : date;
+// convert 20191209 or 2019:12:09 to 2019-12-09
+const parseDate = (date: string) => {
+    if (date.length === 8) {
+        return [date.substr(0, 4), date.substr(4, 2), date.substr(6, 2)].join('-');
+    }
+    return date.replace(/:/g, '-');
+};
 
-// convert 152339+0000 to 15:23:39+0000
-const parseTime = (time: string) => time.length >= 6 ?
-    [
-        time.substr(0, 2),
-        time.substr(2, 2),
-        time.substr(4),
-    ].join(':') : time;
+// convert 152339+0000 or 15:23:39+01:00 to 15:23:39+0100
+const parseTime = (time: string) => {
+    if (time.includes(':')) {
+        return time.replace(/([+-]\d{2}):(\d{2})$/, '$1$2');
+    }
+    return [time.substr(0, 2), time.substr(2, 2), time.substr(4)].join(':');
+};
 
 const parseDatetime = (date?: string, time?: string) => (date && time) ?
     `${parseDate(date)}T${parseTime(time)}` :
