@@ -130,7 +130,9 @@ def _move_associated_picture(assoc, desk_id):
         stage_name,
     )
 
-    updates = {"task": {"desk": desk_id, "stage": stage["_id"]}}
+    updated_task = dict(picture.get("task") or {})
+    updated_task.update({"desk": desk_id, "stage": stage["_id"]})
+    updates = {"task": updated_task}
     archive_service.system_update(picture_id, updates, picture)
 
     updated = picture.copy()

@@ -74,7 +74,7 @@ def move_associated_pictures_from_personal_space(updates, original):
     if not stage:
         return
 
-    associations = updates.get("associations") or original.get("associations") or {}
+    associations = updates.get("associations") or (original or {}).get("associations") or {}
     archive_service = superdesk.get_resource_service("archive")
 
     for key, assoc in associations.items():
@@ -104,9 +104,11 @@ def move_associated_pictures_from_personal_space(updates, original):
             stage_name,
         )
 
+        updated_task = dict(picture.get("task") or {})
+        updated_task.update({"desk": desk_id, "stage": stage["_id"]})
         archive_service.system_update(
             picture_id,
-            {"task": {"desk": desk_id, "stage": stage["_id"]}},
+            {"task": updated_task},
             picture,
         )
 
@@ -163,9 +165,11 @@ def on_item_moved(sender, item, original, **kwargs):
             stage_name,
         )
 
+        updated_task = dict(picture.get("task") or {})
+        updated_task.update({"desk": desk_id, "stage": stage["_id"]})
         archive_service.system_update(
             picture_id,
-            {"task": {"desk": desk_id, "stage": stage["_id"]}},
+            {"task": updated_task},
             picture,
         )
 
