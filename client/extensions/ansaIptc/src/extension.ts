@@ -10,12 +10,16 @@ const parseDate = (date: string) => {
     return date.replace(/:/g, '-');
 };
 
-// convert 152339+0000 or 15:23:39+01:00 to 15:23:39+0100
+// convert IPTC time to HH:MM:SS±HHMM
+// handles: 152339+0000 (compact) and 15:23:39+01:00 (extended)
 const parseTime = (time: string) => {
-    if (time.includes(':')) {
+    if (/^\d{2}:\d{2}(?::\d{2})?/.test(time)) {
         return time.replace(/([+-]\d{2}):(\d{2})$/, '$1$2');
     }
-    return [time.substr(0, 2), time.substr(2, 2), time.substr(4)].join(':');
+    if (/^\d{6}(?:[+-]\d{4})?$/.test(time)) {
+        return [time.substr(0, 2), time.substr(2, 2), time.substr(4)].join(':');
+    }
+    return time;
 };
 
 const parseDatetime = (date?: string, time?: string) => (date && time) ?
