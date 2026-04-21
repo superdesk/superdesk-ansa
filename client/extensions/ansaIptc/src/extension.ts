@@ -11,8 +11,9 @@ const parseDate = (date: string) => {
 };
 
 // convert 152339+0000 or 15:23:39+01:00 to 15:23:39+0100
+// handles: 152339+0000 (compact) and 15:23:39+01:00 (extended)
 const parseTime = (time: string) => {
-    if (time.includes(':')) {
+    if (/^\d{2}:\d{2}(?::\d{2})?/.test(time)) {
         return time.replace(/([+-]\d{2}):(\d{2})$/, '$1$2');
     }
     if (/^\d{6}(?:[+-]\d{4})?$/.test(time)) {
