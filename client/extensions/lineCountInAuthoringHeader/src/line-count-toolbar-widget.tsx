@@ -61,7 +61,13 @@ export function getLineCountToolbarWidget(superdesk: ISuperdesk) {
             if (this.editorEl == null) {
                 return;
             }
-            const next = getLinesCount(this.editorEl.innerText ?? '');
+
+            const blocks = this.editorEl.querySelectorAll('[data-block="true"]');
+            const plainText = Array.from(blocks)
+                .map((block) => block.textContent ?? '')
+                .join('\n');
+            const next = getLinesCount(plainText);
+
             if (next !== this.state.linesCount) {
                 this.setState({linesCount: next});
             }
