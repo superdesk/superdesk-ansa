@@ -2,9 +2,10 @@ import logging
 
 import superdesk
 from superdesk import get_resource_service
-from superdesk.signals import item_update
+from superdesk.signals import item_update, item_moved
+from superdesk.metadata.item import PUBLISH_STATES
 from apps.content import push_content_notification
-from flask import current_app
+from flask import current_app, request
 
 logger = logging.getLogger(__name__)
 
@@ -63,16 +64,55 @@ def on_item_update(sender, updates, original, **kwargs):
     desk_id = original.get("task", {}).get("desk")
     if not desk_id or not is_desk_enabled(desk_id):
         return
+    _move_picture_associations(
+        updates.get("associations"),
+        desk_id,
+        old_associations=original.get("associations"),
+    )
 
-    new_associations = updates.get("associations") or {}
-    old_associations = original.get("associations") or {}
 
-    for key, assoc in new_associations.items():
+def on_item_moved(sender, item, original, **kwargs):
+    """When an article is sent from personal space, send associated pictures to the same desk.
+
+    Pictures are moved to the stage defined in move_picture_stage vocabulary,
+    if the desk is enabled in move_picture_desks vocabulary.
+    """
+    # only handle send from personal space (original had no desk)
+    if original.get("task", {}).get("desk"):
+        return
+    desk_id = item.get("task", {}).get("desk")
+    if not desk_id or not is_desk_enabled(desk_id):
+        return
+    _move_picture_associations(item.get("associations"), desk_id)
+
+
+def on_publish_from_personal_space(updates, original):
+    """When publishing from personal space, move associated pictures to the target desk."""
+    # only handle personal space (no desk on original)
+    if original and original.get("task", {}).get("desk"):
+        return
+
+    # set_desk hasn't run yet on publish, so fall back to request args for the target desk
+    desk_id = updates.get("task", {}).get("desk")
+    if not desk_id and request and request.args:
+        desk_id = request.args.get("desk_id")
+    if not desk_id or not is_desk_enabled(desk_id):
+        return
+
+    associations = updates.get("associations") or (original or {}).get("associations")
+    _move_picture_associations(associations, desk_id, skip_published=True)
+
+
+def _move_picture_associations(associations, desk_id, old_associations=None, skip_published=False):
+    for key, assoc in (associations or {}).items():
         if not assoc or assoc.get("type") != "picture":
             continue
-        old_assoc = old_associations.get(key)
-        if old_assoc and old_assoc.get("_id") == assoc.get("_id"):
+        if skip_published and assoc.get("state") in PUBLISH_STATES:
             continue
+        if old_associations:
+            old_assoc = old_associations.get(key)
+            if old_assoc and old_assoc.get("_id") == assoc.get("_id"):
+                continue
         _move_associated_picture(assoc, desk_id)
 
 
@@ -143,3 +183,4 @@ def _move_associated_picture(assoc, desk_id):
 def init_app(app):
     superdesk.item_create.connect(on_item_create)
     item_update.connect(on_item_update)
+    item_moved.connect(on_item_moved)
