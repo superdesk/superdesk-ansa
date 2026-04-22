@@ -5,6 +5,7 @@ from superdesk.signals import item_publish
 from superdesk.metadata.item import PUBLISH_STATES
 
 from .constants import PRODUCTS_ID
+from .move_picture_to_desk import on_publish_from_personal_space
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -18,6 +19,7 @@ def on_update(resource, updates, original):
 
 def on_publish(updates, original):
     assign_product_to_pictures(updates, original)
+    on_publish_from_personal_space(updates, original)
 
 
 def assign_product_to_pictures(updates, original):

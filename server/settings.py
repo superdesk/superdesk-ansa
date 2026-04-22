@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "ansa.formatters",
     "ansa.routing",
     "ansa.stage_auto_publishing",
+    "ansa.move_picture_to_desk",
     "ansa.update_signal",
     "ansa.validate",
     "ansa.save_iptc",
@@ -303,6 +304,9 @@ PRIORITY_TO_PROFILE_MAPPING = {
 }
 
 HEADLINE_MAXLENGTH = 90
+
+MOVE_PICTURE_STAGE_VOCABULARY_ID = "move_picture_stage"
+MOVE_PICTURE_DESKS_VOCABULARY_ID = "move_picture_desks"
 
 # AUTHORING CONFIG
 
