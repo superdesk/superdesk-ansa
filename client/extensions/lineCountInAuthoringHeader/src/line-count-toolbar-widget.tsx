@@ -5,6 +5,7 @@ import {IArticle, ISuperdesk} from 'superdesk-api';
 export function getLineCountToolbarWidget(superdesk: ISuperdesk) {
     const {gettext, gettextPlural} = superdesk.localization;
     const {getLinesCount, stripHtmlTags} = superdesk.utilities;
+    const ATTACH_RETRY_MS = 250;
 
     return class LineCountToolbarWidget extends React.PureComponent<
         {entity: IArticle},
@@ -13,6 +14,7 @@ export function getLineCountToolbarWidget(superdesk: ISuperdesk) {
         private observer: MutationObserver | null = null;
         private editorEl: HTMLElement | null = null;
         private attachTimer: number | null = null;
+        private frameId: number | null = null;
 
         constructor(props: {entity: IArticle}) {
             super(props);
@@ -36,6 +38,11 @@ export function getLineCountToolbarWidget(superdesk: ISuperdesk) {
             this.observer?.disconnect();
             if (this.attachTimer != null) {
                 window.clearTimeout(this.attachTimer);
+                this.attachTimer = null;
+            }
+            if (this.frameId != null) {
+                window.cancelAnimationFrame(this.frameId);
+                this.frameId = null;
             }
         }
 
@@ -43,18 +50,31 @@ export function getLineCountToolbarWidget(superdesk: ISuperdesk) {
             const el = document.getElementById('bodyhtml');
 
             if (el == null) {
-                this.attachTimer = window.setTimeout(this.tryAttachObserver, 250);
+                this.attachTimer = window.setTimeout(this.tryAttachObserver, ATTACH_RETRY_MS);
                 return;
             }
 
+            this.attachTimer = null;
             this.editorEl = el;
-            this.observer = new MutationObserver(this.recompute);
+            this.observer?.disconnect();
+            this.observer = new MutationObserver(this.scheduleRecompute);
             this.observer.observe(el, {
                 characterData: true,
                 subtree: true,
                 childList: true,
             });
             this.recompute();
+        };
+
+        private scheduleRecompute = () => {
+            if (this.frameId != null) {
+                return;
+            }
+
+            this.frameId = window.requestAnimationFrame(() => {
+                this.frameId = null;
+                this.recompute();
+            });
         };
 
         private recompute = () => {
