@@ -6,75 +6,19 @@ export function getLineCountToolbarWidget(superdesk: ISuperdesk) {
     const {gettext, gettextPlural} = superdesk.localization;
     const {getLinesCount, stripHtmlTags} = superdesk.utilities;
 
-    return class LineCountToolbarWidget extends React.PureComponent<
-        {entity: IArticle},
-        {linesCount: number | null}
-    > {
-        private observer: MutationObserver | null = null;
-        private editorEl: HTMLElement | null = null;
-        private attachTimer: number | null = null;
-
-        constructor(props: {entity: IArticle}) {
-            super(props);
-            this.state = {linesCount: computeFromEntity(props.entity)};
-        }
-
-        componentDidMount() {
-            this.tryAttachObserver();
-        }
-
-        componentDidUpdate(prevProps: {entity: IArticle}) {
-            if (this.editorEl == null && prevProps.entity !== this.props.entity) {
-                const next = computeFromEntity(this.props.entity);
-                if (next !== this.state.linesCount) {
-                    this.setState({linesCount: next});
-                }
-            }
-        }
-
-        componentWillUnmount() {
-            this.observer?.disconnect();
-            if (this.attachTimer != null) {
-                window.clearTimeout(this.attachTimer);
-            }
-        }
-
-        private tryAttachObserver = () => {
-            const el = document.getElementById('bodyhtml');
-
-            if (el == null) {
-                this.attachTimer = window.setTimeout(this.tryAttachObserver, 250);
-                return;
-            }
-
-            this.editorEl = el;
-            this.observer = new MutationObserver(this.recompute);
-            this.observer.observe(el, {
-                characterData: true,
-                subtree: true,
-                childList: true,
-            });
-            this.recompute();
-        };
-
-        private recompute = () => {
-            if (this.editorEl == null) {
-                return;
-            }
-
-            const blocks = this.editorEl.querySelectorAll('[data-block="true"]');
-            const plainText = Array.from(blocks)
-                .map((block) => block.textContent ?? '')
-                .join('\n');
-            const next = getLinesCount(plainText);
-
-            if (next !== this.state.linesCount) {
-                this.setState({linesCount: next});
-            }
-        };
-
+    return class LineCountToolbarWidget extends React.PureComponent<{entity: IArticle}> {
         render() {
-            const {linesCount} = this.state;
+            const {entity} = this.props;
+            const blocks = entity.fields_meta?.body_html?.draftjsState?.[0]?.blocks;
+            const text = blocks != null
+                ? blocks.map((b: {text: string}) => b.text).join('\n')
+                : entity.body_html != null ? stripHtmlTags(entity.body_html) : null;
+
+            if (text == null) {
+                return null;
+            }
+
+            const linesCount = getLinesCount(text);
 
             if (linesCount == null) {
                 return null;
@@ -88,19 +32,5 @@ export function getLineCountToolbarWidget(superdesk: ISuperdesk) {
                 </dl>
             );
         }
-    };
-
-    function computeFromEntity(entity: IArticle): number | null {
-        const blocks = entity.fields_meta?.body_html?.draftjsState?.[0]?.blocks;
-
-        if (blocks != null) {
-            return getLinesCount(blocks.map((b: {text: string}) => b.text).join('\n'));
-        }
-
-        if (entity.body_html != null) {
-            return getLinesCount(stripHtmlTags(entity.body_html));
-        }
-
-        return null;
     }
 }
