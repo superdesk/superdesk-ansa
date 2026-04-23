@@ -6,7 +6,7 @@ export function getLineCountToolbarWidget(superdesk: ISuperdesk) {
     const {gettext, gettextPlural} = superdesk.localization;
     const {getLinesCount, stripHtmlTags} = superdesk.utilities;
 
-    return class LineCountToolbarWidget extends React.PureComponent<{entity: IArticle}> {
+    return class LineCountToolbarWidget extends React.Component<{entity: IArticle}> {
         render() {
             const {entity} = this.props;
 
