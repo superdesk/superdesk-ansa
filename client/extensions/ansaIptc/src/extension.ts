@@ -10,21 +10,48 @@ const parseDate = (date: string) => {
     return date.replace(/:/g, '-');
 };
 
-// convert IPTC time to HH:MM:SS±HHMM
-// handles: 152339+0000 (compact) and 15:23:39+01:00 (extended)
+// convert IPTC time to HH:MM:SS±HH:MM
+// handles: 152339+0000 (compact), 15:23:39+0100 and 15:23:39+01:00 (extended)
+// also strips milliseconds if present (e.g. 09:07:19.042+02:00 -> 09:07:19+02:00)
 const parseTime = (time: string) => {
-    if (/^\d{2}:\d{2}(?::\d{2})?/.test(time)) {
-        return time.replace(/([+-]\d{2}):(\d{2})$/, '$1$2');
+    const stripped = time.replace(/\.\d+/, '');
+    if (/^\d{2}:\d{2}/.test(stripped)) {
+        return stripped.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
     }
-    if (/^\d{6}(?:[+-]\d{4})?$/.test(time)) {
-        return [time.substr(0, 2), time.substr(2, 2), time.substr(4)].join(':');
+    if (/^\d{6}/.test(stripped)) {
+        const hhmmss = [stripped.substr(0, 2), stripped.substr(2, 2), stripped.substr(4, 2)].join(':');
+        const tz = stripped.substr(6);
+        return hhmmss + tz.replace(/^([+-]\d{2})(\d{2})$/, '$1:$2');
     }
-    return time;
+    return stripped;
 };
 
-const parseDatetime = (date?: string, time?: string) => (date && time) ?
-    `${parseDate(date)}T${parseTime(time)}` :
-    null;
+const ISO_DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
+
+// DateCreated may already include the time (e.g. "2026:04:12 09:07:19.042+02:00");
+// in that case use its embedded time and ignore the separate TimeCreated value.
+const parseDatetime = (date?: string, time?: string): string | null => {
+    if (!date) {
+        return null;
+    }
+
+    const combined = date.match(/^(\S+)[ T](.+)$/);
+    const datePart = combined ? combined[1] : date;
+    const timePart = combined ? combined[2] : time;
+
+    if (!timePart) {
+        return null;
+    }
+
+    const result = `${parseDate(datePart)}T${parseTime(timePart)}`;
+
+    if (!ISO_DATETIME_RE.test(result)) {
+        console.warn(`parseDatetime: "${result}" is not in expected YYYY-MM-DDThh:mm:ss±hh:mm format`);
+        return null;
+    }
+
+    return result;
+};
 
 const extension: IExtension = {
     activate: (superdesk: ISuperdesk) => {
