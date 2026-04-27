@@ -13,7 +13,9 @@ const getQueryTimeZone = () => {
 AnsaRelatedCtrl.$inject = ['$scope', 'api', 'storage', 'Keys'];
 export default function AnsaRelatedCtrl($scope, api, storage, Keys) {
     const search = () => {
-        if (!this.query) {
+        const trimmedQuery = (this.query || '').trim();
+
+        if (!trimmedQuery) {
             this.items = [];
             this.searched = false;
             return;
@@ -26,7 +28,7 @@ export default function AnsaRelatedCtrl($scope, api, storage, Keys) {
             bool: {
                 must: [
                     {term: {type: this.activeFilter}},
-                    {query_string: {query: this.query, lenient: true, default_operator: 'AND'}},
+                    {query_string: {query: trimmedQuery, lenient: true, default_operator: 'AND'}},
                 ],
                 must_not: [{term: {item_id: $scope.item._id}}],
             },
