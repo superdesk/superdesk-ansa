@@ -61,7 +61,8 @@
                     <div class="panel-info__icon">
                         <i class="big-icon--info"></i>
                     </div>
-                    <h3 class="panel-info__heading" translate>Not found.</h3>
+                    <h3 class="panel-info__heading" ng-if="!related.searched" translate>Search for the related content.</h3>
+                    <h3 class="panel-info__heading" ng-if="related.searched" translate>Not found.</h3>
                 </div>
             </li>
         </ul>
