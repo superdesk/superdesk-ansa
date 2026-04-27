@@ -10,21 +10,67 @@ const parseDate = (date: string) => {
     return date.replace(/:/g, '-');
 };
 
-// convert 152339+0000 or 15:23:39+01:00 to 15:23:39+0100
-// handles: 152339+0000 (compact) and 15:23:39+01:00 (extended)
+// convert IPTC time to HH:MM:SS±HH:MM (timezone is optional; second precision is required)
+// handles: 152339+0000 (compact), 15:23:39+0100 and 15:23:39+01:00 (extended)
+// also strips milliseconds if present (e.g. 09:07:19.042+02:00 -> 09:07:19+02:00)
 const parseTime = (time: string) => {
-    if (/^\d{2}:\d{2}(?::\d{2})?/.test(time)) {
-        return time.replace(/([+-]\d{2}):(\d{2})$/, '$1$2');
+    const stripped = time.replace(/\.\d+/, '');
+    if (/^\d{2}:\d{2}:\d{2}/.test(stripped)) {
+        return stripped.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
     }
-    if (/^\d{6}(?:[+-]\d{4})?$/.test(time)) {
-        return [time.substr(0, 2), time.substr(2, 2), time.substr(4)].join(':');
+    if (/^\d{6}/.test(stripped)) {
+        const hhmmss = [stripped.substr(0, 2), stripped.substr(2, 2), stripped.substr(4, 2)].join(':');
+        const tz = stripped.substr(6);
+        return hhmmss + tz.replace(/^([+-]\d{2})(\d{2})$/, '$1:$2');
     }
-    return time;
+    return stripped;
 };
 
-const parseDatetime = (date?: string, time?: string) => (date && time) ?
-    `${parseDate(date)}T${parseTime(time)}` :
-    null;
+const ISO_DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
+const ISO_DATETIME_NO_TZ_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+
+// Returns Europe/Rome's UTC offset (e.g. "+02:00") for the given local datetime,
+// used as a fallback when IPTC metadata omits the timezone — matches the server-side parser.
+const getRomeOffset = (isoDatetime: string): string => {
+    const [y, m, d] = isoDatetime.slice(0, 10).split('-').map(Number);
+    const [hh] = isoDatetime.slice(11).split(':').map(Number);
+    const utc = new Date(Date.UTC(y, m - 1, d, hh));
+    const tzName = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Rome',
+        timeZoneName: 'longOffset',
+    }).formatToParts(utc).find((p) => p.type === 'timeZoneName')?.value ?? '';
+    const match = tzName.match(/GMT([+-]\d{2}:\d{2})/);
+    return match ? match[1] : '+01:00';
+};
+
+// DateCreated may already include the time (e.g. "2026:04:12 09:07:19.042+02:00");
+// in that case use its embedded time and ignore the separate TimeCreated value.
+const parseDatetime = (date?: string, time?: string): string | null => {
+    if (!date) {
+        return null;
+    }
+
+    const combined = date.match(/^(\S+)[ T](.+)$/);
+    const datePart = combined ? combined[1] : date;
+    const timePart = combined ? combined[2] : time;
+
+    if (!timePart) {
+        return null;
+    }
+
+    let result = `${parseDate(datePart)}T${parseTime(timePart)}`;
+
+    if (ISO_DATETIME_NO_TZ_RE.test(result)) {
+        result += getRomeOffset(result);
+    }
+
+    if (!ISO_DATETIME_RE.test(result)) {
+        console.warn(`parseDatetime: "${result}" is not in expected YYYY-MM-DDThh:mm:ss±hh:mm format`);
+        return null;
+    }
+
+    return result;
+};
 
 const extension: IExtension = {
     activate: (superdesk: ISuperdesk) => {
