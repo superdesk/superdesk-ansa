@@ -28,6 +28,7 @@ setTimeout(() => startApp(
     {
         countLines: (plainText, lineLength) =>
             plainText
+                .trimEnd()
                 .split('\n')
                 .reduce((sum, line) => sum + (line.length > 0 ? Math.ceil(line.length / lineLength) : 1), 0),
     },
