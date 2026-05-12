@@ -134,11 +134,11 @@ def local_date(delta):
     now = utcnow()
     return utc_to_local(TZ, now + delta).strftime(DATE_FORMAT)
 
-
 def set_default_search_operator(params):
-    if params.get("searchtext") and "OR" not in params["searchtext"] and "AND" not in params["searchtext"]:
-        groups = re.split(r'(\w+|".*?")', params["searchtext"])
-        params["searchtext"] = " AND ".join([group for group in groups if bool(group) and group.strip()])
+    text = params.get("searchtext")
+    if text and not re.search(r'\b(OR|AND)\b', text, re.IGNORECASE):
+        tokens = re.findall(r'"[^"]+"|\w+(?:\'\w+)*', text)
+        params["searchtext"] = " AND ".join(tokens)
 
 
 class AnsaListCursor(ListCursor):
