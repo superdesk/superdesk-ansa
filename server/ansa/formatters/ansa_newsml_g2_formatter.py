@@ -507,7 +507,7 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
         dateline_text = article.get("dateline", {}).get("text", "")
         if dateline.get("date") and dateline.get("text"):
             date = arrow.get(dateline["date"]).datetime
-            source = article.get("extra", {}).get("HeadingNews", article.get("source", "ANSA"))
+            source = article.get("extra", {}).get("HeadingNews") or article.get("source") or "(ANSA)"
 
             language = article.get("language", "it")
             app_languages = {lang["language"] for lang in app.config["LANGUAGES"]}
