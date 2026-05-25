@@ -515,6 +515,18 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
             dateline = content_meta.find(ns("dateline"))
             self.assertEqual(expected, dateline.text, lang)
 
+    @mock.patch("ansa.formatters.ansa_newsml_g2_formatter.format_datetime", lambda **kwargs: "DATE")
+    def test_dateline_source_fallback(self):
+        extra = {k: v for k, v in self.article["extra"].items() if k != "HeadingNews"}
+
+        # empty HeadingNews falls through to article["source"]
+        content_meta = self.format_content_meta({"extra": {**extra, "HeadingNews": ""}, "source": "AAP"})
+        self.assertEqual("AAP - Roma (foo), DATE -", content_meta.find(ns("dateline")).text)
+
+        # missing HeadingNews and empty source falls through to "(ANSA)"
+        content_meta = self.format_content_meta({"extra": extra, "source": ""})
+        self.assertEqual("(ANSA) - Roma (foo), DATE -", content_meta.find(ns("dateline")).text)
+
     def test_source(self):
         item = self.get_item(self.article)
         signal = item.find(ns("itemMeta")).find(ns('signal[@qcode="source:(ANSA)"]'))
