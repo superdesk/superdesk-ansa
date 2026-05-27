@@ -332,10 +332,7 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
         self._format_update_notice(article, item_meta)
 
     def _format_source(self, article, item_meta):
-        try:
-            source = article["extra"]["HeadingNews"]
-        except KeyError:
-            source = "(ANSA)"
+        source = article.get("extra", {}).get("HeadingNews") or article.get("source") or "(ANSA)"
         etree.SubElement(item_meta, "signal", {"qcode": "source:{}".format(source)})
 
     def _format_to(self, article, item_meta):
