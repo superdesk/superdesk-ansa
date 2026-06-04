@@ -332,10 +332,7 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
         self._format_update_notice(article, item_meta)
 
     def _format_source(self, article, item_meta):
-        try:
-            source = article["extra"]["HeadingNews"]
-        except KeyError:
-            source = "(ANSA)"
+        source = article.get("extra", {}).get("HeadingNews") or article.get("source") or "(ANSA)"
         etree.SubElement(item_meta, "signal", {"qcode": "source:{}".format(source)})
 
     def _format_to(self, article, item_meta):
@@ -507,7 +504,7 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
         dateline_text = article.get("dateline", {}).get("text", "")
         if dateline.get("date") and dateline.get("text"):
             date = arrow.get(dateline["date"]).datetime
-            source = article.get("extra", {}).get("HeadingNews", article.get("source", "ANSA"))
+            source = article.get("extra", {}).get("HeadingNews") or article.get("source") or "(ANSA)"
 
             language = article.get("language", "it")
             app_languages = {lang["language"] for lang in app.config["LANGUAGES"]}
