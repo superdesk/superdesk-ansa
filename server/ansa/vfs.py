@@ -3,6 +3,7 @@ import os
 import time
 import arrow
 import random
+import asyncio
 import hashlib
 import logging
 import requests
@@ -173,6 +174,9 @@ class VFSMediaStorage(MediaStorage, MimetypeMixin):
     def url_for_download(self, media, content_type=None):
         return self.app.download_url(media)
 
+    def url_for_external(self, media_id, resource=None):
+        return self.url_for_media(media_id)
+
     def getFilename(self, media):
         return self.metadata(media).get("filename")
 
@@ -181,6 +185,33 @@ class VFSMediaStorage(MediaStorage, MimetypeMixin):
 
     def fetch_rendition(self, rendition, resource=None):
         return self.get(rendition["media"], resource)
+
+    # --- async variants -------------------------------------------------
+    # The async Superdesk core (Quart) calls the ``*_async`` methods of the
+    # media storage. VFS is a synchronous, ``requests``-based remote store, so
+    # the async variants simply run the existing sync implementations in a
+    # thread to avoid blocking the event loop.
+
+    async def get_async(self, id_or_filename, resource=None, begin: int = 0, end=None):
+        return await asyncio.to_thread(self.get, id_or_filename, resource)
+
+    async def get_by_filename_async(self, filename, begin: int = 0, end=None):
+        return await asyncio.to_thread(self.get_by_filename, filename)
+
+    async def exists_async(self, id_or_filename, resource=None):
+        return await asyncio.to_thread(self.exists, id_or_filename, resource)
+
+    async def delete_async(self, id_or_filename, resource=None):
+        return await asyncio.to_thread(self.delete, id_or_filename, resource)
+
+    async def put_async(self, content, filename=None, content_type=None, metadata=None, resource=None, **kwargs):
+        return await asyncio.to_thread(self.put, content, filename, content_type, **kwargs)
+
+    async def remove_unreferenced_files_async(self, existing_files, resource=None):
+        return await asyncio.to_thread(self.remove_unreferenced_files, existing_files, resource)
+
+    async def fetch_rendition_async(self, rendition, resource=None):
+        return await asyncio.to_thread(self.fetch_rendition, rendition, resource)
 
 
 def _get_md5(resp):

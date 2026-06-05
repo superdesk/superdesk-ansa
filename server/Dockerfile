@@ -1,16 +1,21 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND=noninteractive 
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-python3 python3-dev python3-pip python3-venv git gcc mongo-tools mongodb-clients curl \
+python3 python3-dev python3-pip python3-venv git gcc mongo-tools curl \
 # lxml
 libxml2-dev libxslt-dev \
+# xmlsec
+pkg-config libxmlsec1-dev libxmlsec1-openssl \
 # PIL
 libjpeg-dev zlib1g-dev \
 # magic
 libmagic-dev \
-&& rm -rf /var/lib/apt/lists/* 
+# reportlab
+fonts-dejavu \
+# cleanup
+&& rm -rf /var/lib/apt/lists/*
 
 # setup venv
 ENV VIRTUAL_ENV=/opt/venv

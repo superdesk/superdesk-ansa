@@ -55,6 +55,10 @@ def udpate_sign_off(sender, item, **kwargs):
 
 
 def init_app(app):
+    # importing the command module registers its CLI command on the
+    # superdesk commands blueprint (exposed via `python manage.py ...`)
+    from ansa.commands import remove_expired_media  # noqa: F401
+
     superdesk.privilege(name="ansa_metasearch", label="ANSA - metasearch", decsription="")
 
     superdesk.privilege(name="ansa_live_assistant", label="ANSA - live assistant", decsription="")

@@ -1,7 +1,7 @@
 beautifulsoup4==4.14.3
 pyexiv2
-gunicorn
 honcho
+celery-redbeat
 
-git+https://github.com/superdesk/superdesk-core.git@release/2.11#egg=superdesk-core
-git+https://github.com/superdesk/superdesk-planning.git@release/2.10#egg=superdesk-planning
+git+https://github.com/superdesk/superdesk-core.git@develop#egg=superdesk-core
+git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning

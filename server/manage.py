@@ -11,20 +11,7 @@
 
 """Superdesk Manager"""
 
-import superdesk
-from flask_script import Manager
-from app import get_app
-
-from ansa.commands.remove_expired_media import RemoveExpiredMediaCommand
-
-
-app = get_app(init_elastic=True)
-manager = Manager(app)
-
-
-commands = {"ansa:remove_expired_media": RemoveExpiredMediaCommand()}
-commands.update(superdesk.COMMANDS)
-
+from quart.cli import main
 
 if __name__ == "__main__":
-    manager.run(commands)
+    main()

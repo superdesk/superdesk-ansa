@@ -10,8 +10,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+import json
 
-from flask import json
 from pathlib import Path
 from superdesk.default_settings import strtobool, env
 

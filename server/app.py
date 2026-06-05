@@ -41,6 +41,10 @@ def get_app(config=None, init_elastic=False):
     return app
 
 
+# required so quart can instantiate it from the commands terminal
+create_app = get_app
+
+
 if __name__ == "__main__":
     debug = True
     host = "0.0.0.0"
