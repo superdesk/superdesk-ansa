@@ -8,14 +8,15 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk import get_resource_service, config
+from superdesk import get_resource_service
+from superdesk.resource_fields import ID_FIELD
 from superdesk.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
 
 
 def validate_for_publish(item, **kwargs):
     try:
-        doc = get_resource_service("archive").find_one(req=None, _id=item[config.ID_FIELD])
+        doc = get_resource_service("archive").find_one(req=None, _id=item[ID_FIELD])
     except KeyError:  # no id, no validation
         return item
     if not doc:  # doc not in production, skip validation for published/ingested
