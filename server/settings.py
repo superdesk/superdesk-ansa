@@ -22,6 +22,15 @@ if init_data.exists():
     INIT_DATA_PATH = init_data
 
 MODULES = [
+    "superdesk.users",
+    "apps.desks_async",
+    "superdesk.vocabularies_async",
+    "superdesk.archive_async",
+    "superdesk.archived_async",
+    "superdesk.content_types_async",
+    "superdesk.publish_async.module",
+    "superdesk.auth_server.oauth2",
+    "superdesk.auth_server.module",
     "planning",
 ]
 
