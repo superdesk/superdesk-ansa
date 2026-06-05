@@ -13,7 +13,6 @@
 
 import superdesk
 import superdesk.commands
-from superdesk.factory import get_manager
 from app import get_app
 
 from ansa.commands.remove_expired_media import RemoveExpiredMediaCommand
@@ -23,8 +22,18 @@ app = get_app(init_elastic=True)
 
 superdesk.register_command(RemoveExpiredMediaCommand)
 
-manager = get_manager(app)
-
 
 if __name__ == "__main__":
-    manager.run()
+    import sys
+
+    from quart.cli import ScriptInfo
+    from superdesk.commands import cli
+
+    cli.add_command(RemoveExpiredMediaCommand())
+
+    original_load_app = ScriptInfo.load_app
+    ScriptInfo.load_app = lambda self: app
+    try:
+        cli(prog_name="python manage.py", args=sys.argv[1:])
+    finally:
+        ScriptInfo.load_app = original_load_app

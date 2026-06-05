@@ -5,6 +5,7 @@ from ansa.remove_expired_media import remove_expired_media
 
 
 class RemoveExpiredMediaCommand(superdesk.Command):
+    name = "media:remove_expired"
     option_list = (
         superdesk.Option("--days", dest="days", type=int, default=50),
         superdesk.Option("--skip", dest="skip", type=int, default=0),
