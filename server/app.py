@@ -15,6 +15,11 @@ import settings
 from superdesk.factory import get_app as superdesk_app
 from ansa.vfs import VFSMediaStorage
 
+# Allow PyMongo to connect to MongoDB 3.x servers (wire version 6)
+import pymongo.topology_description  # noqa: E402
+
+pymongo.topology_description.TopologyDescription.check_compatible = lambda self: None
+
 
 media_storage = None
 if os.environ.get("ANSA_VFS"):
