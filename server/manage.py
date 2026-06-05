@@ -12,19 +12,19 @@
 """Superdesk Manager"""
 
 import superdesk
-from flask_script import Manager
+import superdesk.commands
+from superdesk.factory import get_manager
 from app import get_app
 
 from ansa.commands.remove_expired_media import RemoveExpiredMediaCommand
 
 
 app = get_app(init_elastic=True)
-manager = Manager(app)
 
+superdesk.register_command(RemoveExpiredMediaCommand)
 
-commands = {"ansa:remove_expired_media": RemoveExpiredMediaCommand()}
-commands.update(superdesk.COMMANDS)
+manager = get_manager(app)
 
 
 if __name__ == "__main__":
-    manager.run(commands)
+    manager.run()
