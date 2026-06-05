@@ -8,7 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk import get_resource_service, config
+from eve import ID_FIELD
+from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 
 
@@ -21,7 +22,7 @@ def auto_publish(item, **kwargs):
     :return:
     """
     get_resource_service("archive_publish").patch(
-        id=item[config.ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, "auto_publish": True}
+        id=item[ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, "auto_publish": True}
     )
     return item
 

@@ -1,6 +1,7 @@
 import logging
 import cerberus
 import superdesk
+from eve import ID_FIELD
 
 from superdesk.metadata.item import PUBLISH_STATES
 
@@ -64,11 +65,11 @@ def publish_item_on_auto_publish_stage(item):
             if stage.get("incoming_macro"):
                 superdesk.get_resource_service("macros").execute_macro(updates, stage["incoming_macro"])
 
-            superdesk.get_resource_service("archive_publish").patch(item[superdesk.config.ID_FIELD], updates)
+            superdesk.get_resource_service("archive_publish").patch(item[ID_FIELD], updates)
         except cerberus.cerberus.ValidationError as err:
             logger.exception(
                 "item was not auto published item=%s stage=%s error=%s",
-                item[superdesk.config.ID_FIELD],
+                item[ID_FIELD],
                 stage["name"],
                 err,
             )
