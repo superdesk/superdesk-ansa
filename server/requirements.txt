@@ -71,6 +71,8 @@ celery[redis]==5.6.3
     # via
     #   celery-redbeat
     #   superdesk-core
+beautifulsoup4==4.14.3
+    # via -r requirements.in
 celery-redbeat==2.3.3
     # via -r requirements.in
 cerberus==1.3.8
