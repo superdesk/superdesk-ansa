@@ -21,6 +21,10 @@ init_data = Path(ABS_PATH) / "data"
 if init_data.exists():
     INIT_DATA_PATH = init_data
 
+MODULES = [
+    "planning",
+]
+
 INSTALLED_APPS = [
     "ansa.macros",
     "apps.languages",
