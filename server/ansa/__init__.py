@@ -1,6 +1,8 @@
 import logging
 import superdesk
 
+from quart.ctx import AppContext
+from quart.globals import _cv_app
 from superdesk.signals import item_publish
 from superdesk.metadata.item import PUBLISH_STATES
 
@@ -65,14 +67,16 @@ def init_app(app):
     item_publish.connect(udpate_sign_off)
 
     priority_to_profile_mapping = {}
-    for key, val in app.config["PRIORITY_TO_PROFILE_MAPPING"].items():
-        app.app_ctx.push()
-        try:
-            profile = app.data.find_one("content_types", req=None, label=val)
-        finally:
-            app.app_ctx.pop()
-        if profile:
-            priority_to_profile_mapping[key] = str(profile["_id"])
+    if app.config.get("PRIORITY_TO_PROFILE_MAPPING"):
+        for key, val in app.config["PRIORITY_TO_PROFILE_MAPPING"].items():
+            ctx = AppContext(app)
+            token = _cv_app.set(ctx)
+            try:
+                profile = app.data.find_one("content_types", req=None, label=val)
+            finally:
+                _cv_app.reset(token)
+            if profile:
+                priority_to_profile_mapping[key] = str(profile["_id"])
 
     app.client_config.update(
         {
