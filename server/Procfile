@@ -1,4 +1,4 @@
-rest: gunicorn -c gunicorn_config.py wsgi
+rest: hypercorn -c hypercorn_config.py asgi
 wamp: python3 -u ws.py
 work: celery -A worker worker -X "${SUPERDESK_CELERY_PREFIX}publish"
 beat: celery -A worker beat
