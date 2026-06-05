@@ -68,17 +68,22 @@ def init_app(app):
     app.on_update += on_update
     item_publish.connect(udpate_sign_off)
 
-    priority_to_profile_mapping = {}
-    for key, val in app.config["PRIORITY_TO_PROFILE_MAPPING"].items():
-        with app.app_context():
-            profile = app.data.find_one("content_types", req=None, label=val)
-        if profile:
-            priority_to_profile_mapping[key] = str(profile["_id"])
-
     app.client_config.update(
         {
             "ansa": {
-                "priority_to_profile_mapping": priority_to_profile_mapping,
+                "priority_to_profile_mapping": {},
             },
         }
     )
+
+    @app.before_serving
+    async def _load_priority_to_profile_mapping():
+        # Resolve content profile ids from their labels once, before serving.
+        # Done here (not in init_app) because the async app/data context is
+        # only available at serving time under Quart.
+        mapping = {}
+        for key, val in app.config["PRIORITY_TO_PROFILE_MAPPING"].items():
+            profile = await app.data.find_one_async("content_types", req=None, label=val)
+            if profile:
+                mapping[key] = str(profile["_id"])
+        app.client_config["ansa"]["priority_to_profile_mapping"] = mapping
