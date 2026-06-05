@@ -13,7 +13,7 @@ import os
 import json
 
 from pathlib import Path
-from superdesk.default_settings import strtobool, env
+from superdesk.default_settings import strtobool, env, MODULES
 
 ABS_PATH = str(Path(__file__).resolve().parent)
 
@@ -41,6 +41,10 @@ INSTALLED_APPS = [
     "ansa",
     "planning",
 ]
+
+# register planning as an async module so its async resources/services
+# (e.g. events_history) get their resource config registered with the app
+MODULES.append("planning")
 
 
 RENDITIONS = {
