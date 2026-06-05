@@ -66,8 +66,11 @@ def init_app(app):
 
     priority_to_profile_mapping = {}
     for key, val in app.config["PRIORITY_TO_PROFILE_MAPPING"].items():
-        with app.app_context():
+        app.app_ctx.push()
+        try:
             profile = app.data.find_one("content_types", req=None, label=val)
+        finally:
+            app.app_ctx.pop()
         if profile:
             priority_to_profile_mapping[key] = str(profile["_id"])
 
