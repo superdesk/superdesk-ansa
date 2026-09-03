@@ -10,12 +10,17 @@ from ansa.save_iptc import init_app, format_date
 from ansa.constants import PHOTO_CATEGORIES_ID
 
 
-class UpdateIPTCMetadataTestCase(unittest.TestCase):
-    def setUp(self):
+class UpdateIPTCMetadataTestCase(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
         self.app = eve.Eve(media=VFSMediaStorage, settings={"DOMAIN": {}})
         init_app(self.app)
+        self.ctx = self.app.app_context()
+        await self.ctx.push()
 
-    def test_update_iptc_metadata_on_publish(self):
+    async def asyncTearDown(self):
+        await self.ctx.pop()
+
+    async def test_update_iptc_metadata_on_publish(self):
         item = {
             "type": "picture",
             "pubstatus": "usable",
@@ -53,7 +58,9 @@ class UpdateIPTCMetadataTestCase(unittest.TestCase):
             ],
         }
 
-        with self.app.test_request_context("/"):
+        req_ctx = self.app.test_request_context("/")
+        await req_ctx.push()
+        try:
             with patch.object(self.app.media, "put_metadata", return_value="bar") as put_mock:
                 superdesk.item_publish.send(self, item=item)
                 put_mock.assert_called_once_with("orig", ANY)
@@ -87,14 +94,15 @@ class UpdateIPTCMetadataTestCase(unittest.TestCase):
                         ],
                     },
                 )
+        finally:
+            await req_ctx.pop()
 
         self.assertEqual("bar", item["renditions"]["original"]["media"])
         self.assertIn("bar", item["renditions"]["original"]["href"])
 
-    def test_ignore_non_picture_items(self):
-        with self.app.app_context():
-            item = {"type": "video"}
-            superdesk.item_publish.send(self, item=item)
+    async def test_ignore_non_picture_items(self):
+        item = {"type": "video"}
+        superdesk.item_publish.send(self, item=item)
 
     def test_format_date(self):
         dates = [

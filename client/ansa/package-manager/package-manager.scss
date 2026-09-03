@@ -1,8 +1,8 @@
 // packaging.scss
 // Styling for package manger - editor widget
 // ----------------------------------------------------------------------------------------
-@import '~mixins.scss';
-@import '~variables.scss';
+@import 'superdesk-core/styles/sass/mixins.scss';
+@import 'superdesk-core/styles/sass/variables.scss';
 
 .sd-widget.package-manager, .sd-widget.packages {
     .package-manager-content {

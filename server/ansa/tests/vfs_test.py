@@ -52,19 +52,19 @@ def download_url(x):
     return x
 
 
-class VFSTestCase(unittest.TestCase):
-    def setUp(self):
+class VFSTestCase(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
         self.app = flask.Flask(__name__)
         self.app.config["ANSA_VFS"] = "http://vfs/"
         self.app.download_url = download_url
         self.ctx = self.app.app_context()
-        self.ctx.push()
+        await self.ctx.push()
         self.media = vfs.VFSMediaStorage(self.app)
 
-    def tearDown(self):
-        self.ctx.pop()
+    async def asyncTearDown(self):
+        await self.ctx.pop()
 
-    def test_put(self):
+    async def test_put(self):
         data = io.BytesIO(b"foo")
         with requests_mock.mock() as mock:
             mock.post(UPLOAD_URL, content=UPLOAD_RESPONSE.encode("utf-8"))
@@ -80,7 +80,7 @@ class VFSTestCase(unittest.TestCase):
                 with open(tmpfile) as tmp:
                     self.assertEqual(data.read(), tmp.read())
 
-    def test_get_binary(self):
+    async def test_get_binary(self):
         with requests_mock.mock() as mock:
             mock.get(BINARY_URL, content=b"foo")
             mock.get(METADATA_URL, content=METADATA_RESPONSE.encode("utf-8"))
@@ -95,19 +95,19 @@ class VFSTestCase(unittest.TestCase):
             self.assertEqual("foo.txt", media.filename)
             self.assertEqual("2015-11-05T00:00:00+01:00", media.upload_date.isoformat())
 
-    def test_exists(self):
+    async def test_exists(self):
         with requests_mock.mock() as mock:
             mock.get(METADATA_URL, content=METADATA_RESPONSE.encode("utf-8"))
             mock.get(METADATA_URL.replace("foo", "bar"), content=NOT_FOUND_RESPONSE.encode("utf-8"))
             self.assertTrue(self.media.exists("foo"))
             self.assertFalse(self.media.exists("bar"))
 
-    def test_delete(self):
+    async def test_delete(self):
         with requests_mock.mock() as mock:
             mock.delete(DELETE_URL, content=METADATA_RESPONSE.encode("utf-8"))
             self.media.delete("foo")
 
-    def test_delete_graceful(self):
+    async def test_delete_graceful(self):
         with requests_mock.mock() as mock:
             mock.delete(DELETE_URL, content=DELETE_MISSING_FILE_RESPONSE.encode("utf-8"))
             with self.assertLogs(level=logging.WARNING) as log:
@@ -115,28 +115,28 @@ class VFSTestCase(unittest.TestCase):
                 self.assertEqual(1, len(log.output))
                 self.assertIn("File was removed already from vfs md5=foo", log.output[0])
 
-    def test_url_for_media(self):
+    async def test_url_for_media(self):
         self.assertEqual(BINARY_URL, self.media.url_for_media("foo", "image/jpeg"))
 
-    def test_url_for_download(self):
+    async def test_url_for_download(self):
         self.assertEqual("foo", self.media.url_for_download("foo", "text/plain"))
 
-    def test_get_filename(self):
+    async def test_get_filename(self):
         with requests_mock.mock() as mock:
             mock.get(METADATA_URL, content=METADATA_RESPONSE.encode("utf-8"))
             self.assertEqual("foo.txt", self.media.getFilename("foo"))
 
-    def test_remove_unreferenced_files(self):
+    async def test_remove_unreferenced_files(self):
         self.media.remove_unreferenced_files([], "upload")
 
-    def test_fetch_rendition(self):
+    async def test_fetch_rendition(self):
         with requests_mock.mock() as mock:
             mock.get(BINARY_URL, content=b"foo")
             mock.get(METADATA_URL, content=METADATA_RESPONSE.encode("utf-8"))
             media = self.media.fetch_rendition({"media": "foo"})
             self.assertEqual(b"foo", media.read())
 
-    def test_put_metadata(self):
+    async def test_put_metadata(self):
         with requests_mock.mock() as mock:
             mock.post(PUT_METADATA_URL, content=PUT_METADATA_RESPONSE.encode("utf-8"))
             md5 = self.media.put_metadata("foo", {})

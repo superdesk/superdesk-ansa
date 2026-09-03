@@ -1,12 +1,12 @@
 import re
 import math
 import arrow
-import requests
+import aiohttp
 import superdesk
 
 from urllib.parse import urljoin
 from flask import current_app as app
-from superdesk.io.commands.update_ingest import update_renditions
+from superdesk.media.renditions import update_renditions_async
 from datetime import timedelta, datetime
 from superdesk.utc import utcnow, utc_to_local
 from superdesk.utils import ListCursor
@@ -24,6 +24,7 @@ VIEWIMG_HREF = "https://ansafoto.ansa.it/portaleimmagini/bdmproxy/{}.jpg?format=
 
 TIMEOUT = (5, 25)
 VERIFY_SSL = False
+HTTP_TIMEOUT = aiohttp.ClientTimeout(connect=TIMEOUT[0], sock_read=TIMEOUT[1])
 
 
 def get_meta(doc, field, multi=False):
@@ -156,14 +157,16 @@ class AnsaListCursor(ListCursor):
 class AnsaPictureProvider(superdesk.SearchProvider):
     label = "ANSA Pictures"
 
-    @property
-    def sess(self):
-        if not hasattr(self, "_sess"):
-            self._sess = requests.Session()
-            self._sess.get(ansa_photo_api("/portaleimmagini/"), timeout=TIMEOUT, verify=VERIFY_SSL)  # get cookies
-        return self._sess
+    async def _request_json(self, endpoint, params):
+        connector = aiohttp.TCPConnector(ssl=VERIFY_SSL)
+        async with aiohttp.ClientSession(connector=connector, timeout=HTTP_TIMEOUT) as http_client:
+            async with http_client.get(ansa_photo_api("/portaleimmagini/")):
+                pass
+            async with http_client.get(ansa_photo_api(endpoint), params=params) as response:
+                response.raise_for_status()
+                return await response.json()
 
-    def find(self, query):
+    async def find(self, query, params=None):
         size = int(query.get("size", 25))
         page = math.ceil((int(query.get("from", 0)) + 1) / size)
 
@@ -217,15 +220,14 @@ class AnsaPictureProvider(superdesk.SearchProvider):
             pass
 
         set_default_search_operator(params)
-        response = self.sess.get(ansa_photo_api(SEARCH_ENDPOINT), params=params, timeout=TIMEOUT, verify=VERIFY_SSL)
-        return self._parse_items(response)
+        json_data = await self._request_json(SEARCH_ENDPOINT, params)
+        return self._parse_items(json_data)
 
-    def _parse_items(self, response, fetch=False):
-        if not response.status_code == requests.codes.ok:
-            response.raise_for_status()
+    async def find_async(self, query, params=None):
+        return await self.find(query, params)
 
+    def _parse_items(self, json_data, fetch=False):
         items = []
-        json_data = response.json()
         documents = json_data.get("renderResult", {}).get("documents", [])
         for doc in documents:
             md5 = get_meta(doc, "orientationMD5")
@@ -354,7 +356,7 @@ class AnsaPictureProvider(superdesk.SearchProvider):
             json_data.get("simpleSearchResult", {}).get("totalResults", len(items)),
         )
 
-    def fetch(self, guid):
+    async def fetch(self, guid):
         params = {
             "idAnsa": guid,
             "username": self.provider["config"]["username"],
@@ -362,18 +364,21 @@ class AnsaPictureProvider(superdesk.SearchProvider):
             "changets": "true",
         }
 
-        response = self.sess.get(ansa_photo_api(DETAIL_ENDPOINT), params=params, timeout=TIMEOUT, verify=VERIFY_SSL)
-        items = self._parse_items(response, fetch=True)
+        json_data = await self._request_json(DETAIL_ENDPOINT, params)
+        items = self._parse_items(json_data, fetch=True)
         item = items[0]
 
         # generate renditions
         original = item.get("renditions", {}).get("original", {})
         if original:
-            update_renditions(item, original.get("href"), {})
+            await update_renditions_async(item, original.get("href"), {})
 
         # it's in superdesk now, so make it ignore the api
         item["fetch_endpoint"] = ""
         return item
+
+    async def fetch_async(self, guid):
+        return await self.fetch(guid)
 
     def fetch_file(self, href, rendition, item):
         return app.media.get(rendition.get("media"))
