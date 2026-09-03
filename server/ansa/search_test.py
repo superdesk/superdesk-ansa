@@ -1,20 +1,19 @@
 import os
+import json
 import flask
 import unittest
 import superdesk
 
-from unittest.mock import patch, create_autospec
-from httmock import urlmatch, HTTMock
+from unittest.mock import AsyncMock, patch, create_autospec
 from ansa.constants import PHOTO_CATEGORIES_ID, PRODUCTS_ID
 
 from apps.archive import ArchiveService
 from .search import AnsaPictureProvider, set_default_search_operator
 
 
-@urlmatch(netloc=r"172.20.14.88")
-def ansa_mock(url, request):
+def get_ansa_fixture():
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "fixtures", "ansafoto.json")) as f:
-        return f.read()
+        return json.load(f)
 
 
 class Resource:
@@ -47,20 +46,25 @@ class VocabulariesMock:
         raise ValueError(_id)
 
 
-class AnsaPictureTestCase(unittest.TestCase):
+class AnsaPictureTestCase(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.service = AnsaPictureProvider({"config": {"username": "foo", "password": "bar"}})
         self.app = flask.Flask(__name__)
         self.app.config["ANSA_PHOTO_API"] = "http://172.20.14.88/"
 
     @patch.dict(superdesk.resources, resources)
-    def test_find(self):
-        with HTTMock(ansa_mock):
-            with self.app.app_context():
-                items = self.service.find({})
-                self.assertEqual(0, len(items))  # no query, no api call
+    async def test_find(self):
+        ctx = self.app.app_context()
+        await ctx.push()
+        try:
+            self.service._request_json = AsyncMock(return_value=get_ansa_fixture())
+            items = await self.service.find({})
+            self.assertEqual(0, len(items))  # no query, no api call
+            self.service._request_json.assert_not_called()
 
-                items = self.service.find({"query": {"filtered": {"query": {"query_string": {"query": "foo"}}}}})
+            items = await self.service.find({"query": {"filtered": {"query": {"query_string": {"query": "foo"}}}}})
+        finally:
+            await ctx.pop()
         self.assertEqual(1, len(items))
         self.assertEqual(6732873, items.count())
         item = items[0]
@@ -88,13 +92,17 @@ class AnsaPictureTestCase(unittest.TestCase):
         self.assertEqual('foo AND "juventus turin" AND bar', params["searchtext"])
 
     @patch("superdesk.get_resource_service")
-    @patch("ansa.search.update_renditions")
-    def test_fetch(self, update_renditions_mock, get_service_mock):
+    @patch("ansa.search.update_renditions_async", new_callable=AsyncMock)
+    async def test_fetch(self, update_renditions_mock, get_service_mock):
         get_service_mock.return_value = VocabulariesMock()
-        with HTTMock(ansa_mock):
-            with self.app.app_context():
-                item = self.service.fetch("foo")
-                self.assertIsNotNone(item)
+        ctx = self.app.app_context()
+        await ctx.push()
+        try:
+            self.service._request_json = AsyncMock(return_value=get_ansa_fixture())
+            item = await self.service.fetch("foo")
+            self.assertIsNotNone(item)
+        finally:
+            await ctx.pop()
 
         self.assertEqual("en", item["language"])
         self.assertEqual("FAROOQ KHAN / STRR", item["byline"])

@@ -3,7 +3,8 @@ from ansa.validate import validate, MASK_FIELD, Errors
 
 
 class ValidateTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.data.insert(
             "vocabularies",
             [

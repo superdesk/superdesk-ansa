@@ -10,8 +10,8 @@ from pytz import utc
 
 
 class PictureParserTestCase(TestCase):
-    def setUp(self):
-        super().setUp()
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         init_subjects(self.app)
 
         self.app.media = MagicMock()

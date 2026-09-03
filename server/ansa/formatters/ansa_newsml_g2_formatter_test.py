@@ -1,5 +1,6 @@
 import io
 import settings
+import superdesk
 
 from lxml import etree
 from unittest import mock
@@ -35,7 +36,7 @@ def get_content_meta(xml):
     return xml.find("/".join([ns("itemSet"), ns("newsItem"), ns("contentMeta")]))
 
 
-@mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
+@mock.patch("superdesk.publish.formatters.newsml_g2_formatter.generate_sequence_number", mock.AsyncMock(return_value=1))
 class ANSANewsmlG2FormatterTestCase(TestCase):
     formatter = ANSAHTMLNewsMLG2Formatter()
 
@@ -140,7 +141,8 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
 
     subscriber = {"_id": "foo", "name": "Foo", "config": {}, "destinations": []}
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.data.insert("vocabularies", self.vocab)
         self.app.config.update(
             {
@@ -155,21 +157,21 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
             article.update(updates)
         return article
 
-    def test_html_content(self):
+    async def test_html_content(self):
         article = self.get_article()
         formatter = ANSAHTMLNewsMLG2Formatter()
-        _, doc = formatter.format(article, self.subscriber)[0]
+        _, doc = (await formatter.format(article, self.subscriber))[0]
         self.assertIn("<body>", doc)
         self.assertIn("<b>HTML</b>", doc)
 
-    def test_html_empty_content(self):
+    async def test_html_empty_content(self):
         article = self.get_article()
         article["body_html"] = ""
         formatter = ANSAHTMLNewsMLG2Formatter()
-        _, doc = formatter.format(article, self.subscriber)[0]
+        _, doc = (await formatter.format(article, self.subscriber))[0]
         self.assertNotIn("<body>", doc)
 
-    def test_featured_item_link(self):
+    async def test_featured_item_link(self):
         media = self.app.media.put(io.BytesIO(b"test"))
         article = self.get_article()
         article["associations"] = {
@@ -186,7 +188,7 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         }
 
         formatter = ANSAHTMLNewsMLG2Formatter()
-        _, doc = formatter.format(article, self.subscriber)[0]
+        _, doc = (await formatter.format(article, self.subscriber))[0]
         self.assertIn("<link", doc)
         xml = etree.fromstring(doc.encode("utf-8"))
         link = xml.find(
@@ -207,7 +209,7 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertIsNotNone(title)
         self.assertEqual("Head", title.text)
 
-    def test_html_void(self):
+    async def test_html_void(self):
         """Check that HTML void element use self closing tags, but other elements with no content use start/end pairs
 
         SDESK-947 regression test
@@ -218,14 +220,14 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
             "<em/><br/>other test</p>"
         )
         formatter = ANSAHTMLNewsMLG2Formatter()
-        _, doc = formatter.format(article, self.subscriber)[0]
+        _, doc = (await formatter.format(article, self.subscriber))[0]
         html_start = '<inlineXML contenttype="application/xhtml+xml">'
         html = doc[doc.find(html_start) + len(html_start) : doc.find("</inlineXML>")]
         self.assertIn("<html>", html)
         self.assertIn("<body>", html)
         self.assertIn("<h1>The story body</h1>", html)
 
-    def test_highlights(self):
+    async def test_highlights(self):
         ids = self.app.data.insert(
             "highlights",
             [
@@ -236,7 +238,7 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
 
         article = self.get_article()
         article["highlights"] = ids
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
         xml = etree.fromstring(doc.encode("utf-8"))
         content_meta = get_content_meta(xml)
         subjects = content_meta.findall('{http://iptc.org/std/nar/2006-10-01/}subject[@type="highlight"]')
@@ -245,7 +247,7 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         name = subjects[0].find(ns("name"))
         self.assertEqual("Sports highlights", name.text)
 
-    def test_gallery(self):
+    async def test_gallery(self):
         article = self.get_article()
         article["body_html"] = "<p>body</p>"
         article["associations"] = {
@@ -272,7 +274,7 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
             "canceled": None,
         }
 
-        xml = self.format(article)
+        xml = await self.format(article)
         inline_xmls = xml.findall(".//%s" % ns("inlineXML"))
         self.assertEqual(2, len(inline_xmls))
         gallery = inline_xmls[1]
@@ -286,33 +288,33 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertIn("src", img.attrib)
         self.assertTrue("foo", figcaption.text)
 
-    def format(self, article):
+    async def format(self, article):
         formatter = ANSAHTMLNewsMLG2Formatter()
-        _, doc = formatter.format(article, self.subscriber)[0]
+        _, doc = (await formatter.format(article, self.subscriber))[0]
         return etree.fromstring(doc.encode("utf-8"))
 
-    def test_sign_off(self):
-        content_meta = self.format_content_meta()
+    async def test_sign_off(self):
+        content_meta = await self.format_content_meta()
         creators = content_meta.findall(ns("creator"))
         self.assertEqual(1, len(creators))
         self.assertEqual("FOO", creators[0].get("literal"))
 
-        content_meta = self.format_content_meta({"sign_off": "FOO/BAR/BAZ"})
+        content_meta = await self.format_content_meta({"sign_off": "FOO/BAR/BAZ"})
         creators = content_meta.findall(ns("creator"))
         self.assertEqual(1, len(creators))
         self.assertEqual("FOO-BAZ", creators[0].get("literal"))
 
-        content_meta = self.format_content_meta({"sign_off": "foo-bar"})
+        content_meta = await self.format_content_meta({"sign_off": "foo-bar"})
         creators = content_meta.findall(ns("creator"))
         self.assertEqual(1, len(creators))
         self.assertEqual("FOO-BAR", creators[0].get("literal"))
 
-        content_meta = self.format_content_meta({"sign_off": "a-b/c"})
+        content_meta = await self.format_content_meta({"sign_off": "a-b/c"})
         creators = content_meta.findall(ns("creator"))
         self.assertEqual(1, len(creators))
         self.assertEqual("A-B", creators[0].get("literal"))
 
-        content_meta = self.format_content_meta({"sign_off": "foo/"})
+        content_meta = await self.format_content_meta({"sign_off": "foo/"})
         creators = content_meta.findall(ns("creator"))
         self.assertEqual(1, len(creators))
         self.assertEqual("FOO", creators[0].get("literal"))
@@ -334,8 +336,8 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertEqual(1, len(creators))
         self.assertEqual("ZC", creators[0].get("literal"))
 
-    def test_headlines(self):
-        content_meta = self.format_content_meta()
+    async def test_headlines(self):
+        content_meta = await self.format_content_meta()
         headlines = content_meta.findall(ns("headline"))
         self.assertEqual(5, len(headlines))
         self.assertEqual("hld:subHeadline", headlines[1].get("role"))
@@ -346,19 +348,19 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertEqual("SMS message", headlines[3].text)
         self.assertEqual("This is a test headline", headlines[4].text)
 
-    def format_content_meta(self, updates=None):
+    async def format_content_meta(self, updates=None):
         article = self.get_article(updates)
-        xml = self.format(article)
+        xml = await self.format(article)
         return get_content_meta(xml)
 
-    def test_product_output_codes(self):
-        content_meta = self.format_content_meta()
+    async def test_product_output_codes(self):
+        content_meta = await self.format_content_meta()
         subject = content_meta.find(ns('subject[@qcode="products:020002007289230000"]'))
         self.assertIsNotNone(subject)
         self.assertEqual("PHOTOMED", subject.find(ns("name")).text)
 
-    def test_located(self):
-        content_meta = self.format_content_meta()
+    async def test_located(self):
+        content_meta = await self.format_content_meta()
         located = content_meta.find(ns("located"))
         self.assertIsNotNone(located)
         self.assertEqual("city:ROME", located.get("qcode"))
@@ -367,33 +369,33 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertEqual("reg:Latium", broader[0].get("qcode"))
         self.assertEqual("cntry:ITALY", broader[1].get("qcode"))
 
-    def test_byline(self):
-        content_meta = self.format_content_meta()
+    async def test_byline(self):
+        content_meta = await self.format_content_meta()
         byline = content_meta.find(ns("by"))
         self.assertEqual("joe", byline.text)
 
-    def test_places(self):
-        content_meta = self.format_content_meta()
+    async def test_places(self):
+        content_meta = await self.format_content_meta()
         places = content_meta.findall(ns('subject[@type="cpnat:geoArea"]'))
         self.assertEqual(1, len(places))
         self.assertEqual("n:Roma", places[0].get("qcode"))
         self.assertEqual("Roma", places[0].find(ns("name")).text)
 
-    def get_item(self, article_updates):
+    async def get_item(self, article_updates):
         article = self.get_article(article_updates)
-        xml = self.format(article)
+        xml = await self.format(article)
         return xml.find(ns("itemSet/") + ns("newsItem"))
 
-    def test_use_original_ansa_id(self):
+    async def test_use_original_ansa_id(self):
         updates = {"extra": {"ansaid": "tag:ansa:foo"}}
-        item = self.get_item(updates)
+        item = await self.get_item(updates)
         self.assertEqual(updates["extra"]["ansaid"], item.get("guid"))
 
         updates["original_id"] = "some:other:id"
-        item = self.get_item(updates)
+        item = await self.get_item(updates)
         self.assertNotEqual(updates["extra"]["ansaid"], item.get("guid"))
 
-    def test_semantics(self):
+    async def test_semantics(self):
         updates = {
             "semantics": {
                 "persons": ["Giorgio Ferrero", "Flavio"],
@@ -402,7 +404,7 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
             "company_codes": [],
         }
 
-        meta = self.format_content_meta(updates)
+        meta = await self.format_content_meta(updates)
 
         persons = meta.findall(ns('subject[@type="cpnat:person"]'))
         self.assertEqual(2, len(persons))
@@ -414,9 +416,9 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertEqual(updates["semantics"]["organizations"][0], orgs[0].find(ns("name")).text)
         self.assertEqual(updates["semantics"]["organizations"][1], orgs[1].find(ns("name")).text)
 
-    def test_format_geonames_city(self):
+    async def test_format_geonames_city(self):
         updates = {"place": [geoname]}
-        meta = self.format_content_meta(updates)
+        meta = await self.format_content_meta(updates)
 
         places = meta.findall(ns('subject[@type="cptype:city"]'))
         self.assertEqual(1, len(places))
@@ -447,16 +449,16 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         geo = place.find(ns("geoAreaDetails"))
         self.assertIsNone(geo)
 
-    def test_genre(self):
-        meta = self.format_content_meta({})
+    async def test_genre(self):
+        meta = await self.format_content_meta({})
         genre = meta.find(ns("genre"))
         self.assertIsNotNone(genre)
         self.assertEqual("genre:Article", genre.get("qcode"))
         self.assertEqual("Article (news)", genre.find(ns("name")).text)
 
-    def test_located_semantics(self):
+    async def test_located_semantics(self):
         updates = {"dateline": {"located": {"place": geoname}, "text": geoname["name"]}}
-        meta = self.format_content_meta(updates)
+        meta = await self.format_content_meta(updates)
         located = meta.find(ns("located"))
         self.assertIsNotNone(located)
         self.assertEqual("geo:%s" % geoname["code"], located.get("qcode"))
@@ -467,9 +469,9 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertEqual(str(geoname["location"]["lat"]), position.get("latitude"))
         self.assertEqual(str(geoname["location"]["lon"]), position.get("longitude"))
 
-    def test_desk_in_output(self):
+    async def test_desk_in_output(self):
         desks = [{"name": "SPO - Sports"}, {"name": "FIN - Finance"}]
-        self.app.data.insert("desks", desks)
+        await superdesk.get_resource_service("desks").create_async(desks)
 
         article = self.article.copy()
         article["_id"] = article["guid"]
@@ -487,7 +489,7 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         insert_versioning_documents("archive", article)
         self.app.data.insert("archive", [article])
 
-        item = self.get_item(article)
+        item = await self.get_item(article)
         service = item.find(ns("itemMeta")).find(ns("service"))
         self.assertIsNotNone(service)
         self.assertEqual(desks[1]["name"], service.find(ns("name")).text)
@@ -500,7 +502,7 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertIsNotNone(signal)
 
     @mock.patch("ansa.formatters.ansa_newsml_g2_formatter.format_datetime", lambda **kwargs: "DATE")
-    def test_dateline(self):
+    async def test_dateline(self):
         datelines = {
             "it": "(ANSA) - Roma (foo), DATE -",
             "en": "(ANSA) - Roma (foo), DATE -",
@@ -511,34 +513,34 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         }
 
         for lang, expected in datelines.items():
-            content_meta = self.format_content_meta({"language": lang})
+            content_meta = await self.format_content_meta({"language": lang})
             dateline = content_meta.find(ns("dateline"))
             self.assertEqual(expected, dateline.text, lang)
 
     @mock.patch("ansa.formatters.ansa_newsml_g2_formatter.format_datetime", lambda **kwargs: "DATE")
-    def test_dateline_source_fallback(self):
+    async def test_dateline_source_fallback(self):
         extra = {k: v for k, v in self.article["extra"].items() if k != "HeadingNews"}
 
         # empty HeadingNews falls through to article["source"]
-        content_meta = self.format_content_meta({"extra": {**extra, "HeadingNews": ""}, "source": "AAP"})
+        content_meta = await self.format_content_meta({"extra": {**extra, "HeadingNews": ""}, "source": "AAP"})
         self.assertEqual("AAP - Roma (foo), DATE -", content_meta.find(ns("dateline")).text)
 
         # missing HeadingNews and empty source falls through to "(ANSA)"
-        content_meta = self.format_content_meta({"extra": extra, "source": ""})
+        content_meta = await self.format_content_meta({"extra": extra, "source": ""})
         self.assertEqual("(ANSA) - Roma (foo), DATE -", content_meta.find(ns("dateline")).text)
 
-    def test_source(self):
-        item = self.get_item(self.article)
+    async def test_source(self):
+        item = await self.get_item(self.article)
         signal = item.find(ns("itemMeta")).find(ns('signal[@qcode="source:(ANSA)"]'))
         self.assertIsNotNone(signal)
 
         article = self.article.copy()
         article["extra"] = {"HeadingNews": "BAR"}
-        item = self.get_item(article)
+        item = await self.get_item(article)
         signal = item.find(ns("itemMeta")).find(ns('signal[@qcode="source:BAR"]'))
         self.assertIsNotNone(signal)
 
-    def test_rewrite_guid_version(self):
+    async def test_rewrite_guid_version(self):
         article1 = self.article.copy()
         article2 = self.article.copy()
         article3 = self.article.copy()
@@ -553,23 +555,23 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
 
         self.app.data.insert("archive", [article1, article2, article3])
 
-        item1 = self.get_item(article1)
+        item1 = await self.get_item(article1)
         self.assertEqual(article1["guid"], item1.get("guid"))
         self.assertEqual("1", item1.get("version"))
 
-        item2 = self.get_item(article2)
+        item2 = await self.get_item(article2)
         self.assertEqual(article1["guid"], item2.get("guid"))
         self.assertEqual("2", item2.get("version"))
 
-        item3 = self.get_item(article3)
+        item3 = await self.get_item(article3)
         self.assertEqual(article1["guid"], item3.get("guid"))
         self.assertEqual("3", item3.get("version"))
 
-    def test_empty_content(self):
+    async def test_empty_content(self):
         article = self.get_article()
         article.pop("body_html")
         formatter = ANSAHTMLNewsMLG2Formatter()
-        _, doc = formatter.format(article, self.subscriber)[0]
+        _, doc = (await formatter.format(article, self.subscriber))[0]
         xml = etree.fromstring(doc.encode("utf-8"))
         html = xml.find(
             "/".join(
@@ -583,9 +585,9 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         )
         self.assertIsNone(html)
 
-    def test_picture_content_meta(self):
+    async def test_picture_content_meta(self):
         updates = {"type": "picture", "copyrightholder": "Foo", "alt_text": "Alt"}
-        content_meta = self.format_content_meta(updates)
+        content_meta = await self.format_content_meta(updates)
 
         creditline = content_meta.find(ns("creditline"))
         self.assertEqual("Foo", creditline.text)
@@ -612,12 +614,12 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         alt_text = content_meta.find(ns('description[@role="drol:altText"]'))
         self.assertIsNotNone(alt_text)
 
-    def test_picture_archive_photo(self):
+    async def test_picture_archive_photo(self):
         updates = {"type": "picture", "copyrightholder": None, "copyrightnotice": "ANSA", "alt_text": "Alt"}
-        self.format_content_meta(updates)
+        await self.format_content_meta(updates)
 
-    def test_right_info(self):
-        item = self.get_item({"type": "picture", "usageterms": "Foo usage"})
+    async def test_right_info(self):
+        item = await self.get_item({"type": "picture", "usageterms": "Foo usage"})
         rights_info = item.find(ns("rightsInfo"))
         self.assertIsNotNone(rights_info)
         copyrightholder = rights_info.find(ns("copyrightHolder"))
@@ -627,16 +629,16 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         usageterms = rights_info.find(ns("usageTerms"))
         self.assertEqual("Foo usage", usageterms.text)
 
-    def test_keywords(self):
-        content_meta = self.format_content_meta()
+    async def test_keywords(self):
+        content_meta = await self.format_content_meta()
         keywords = content_meta.findall(ns("keyword"))
         self.assertEqual(2, len(keywords))
         self.assertEqual("traffic", keywords[0].text)
         self.assertEqual("sport", keywords[1].text)
 
-    def test_plaintext_formatter(self):
+    async def test_plaintext_formatter(self):
         formatter = ANSAPlainTextNewsMLG2Formatter()
         article = self.get_article()
-        _, doc = formatter.format(article, self.subscriber)[0]
+        _, doc = (await formatter.format(article, self.subscriber))[0]
         self.assertIn("<body>", doc)
         self.assertIn("<pre>The story body HTML\nanother paragraph</pre>", doc)

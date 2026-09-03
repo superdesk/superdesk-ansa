@@ -67,8 +67,8 @@ class ANSAParser(NewsMLTwoFeedParser):
         "PEC": "Business",
     }
 
-    def parse_content_meta(self, tree, item):
-        super().parse_content_meta(tree, item)
+    async def parse_content_meta(self, tree, item):
+        await super().parse_content_meta(tree, item)
         meta = tree.find(self.qname("contentMeta"))
 
         headlines = meta.findall(self.qname("headline"))
@@ -165,8 +165,8 @@ class ANSAParser(NewsMLTwoFeedParser):
                 else:
                     item["sign_off"] = name.text.upper()
 
-    def parse_item(self, tree):
-        item = super().parse_item(tree)
+    async def parse_item(self, tree):
+        item = await super().parse_item(tree)
         if item.get("word_count") == 0 and item.get("type") == "text":
             item["word_count"] = get_word_count(item.get("body_html", "<p></p>"))
         item["guid"] = tree.attrib["guid"]
@@ -177,8 +177,8 @@ class ANSAParser(NewsMLTwoFeedParser):
         local = arrow.get(string).datetime
         return local_to_utc(ROME_TZ, local)
 
-    def parse_content_subject(self, tree, item):
-        super().parse_content_subject(tree, item)
+    async def parse_content_subject(self, tree, item):
+        await super().parse_content_subject(tree, item)
         for subject in tree.findall(self.qname("subject")):
             qcode_parts = subject.get("qcode", "").split(":")
             if len(qcode_parts) == 2 and qcode_parts[0] == "products":

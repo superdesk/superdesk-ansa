@@ -11,15 +11,15 @@ GEONAMES_URL = "http://api.geonames.org/getJSON?type=json&username=superdesk_dev
 
 
 class ANSAParserTestCase(TestCase):
-    def parse(self, fixture):
+    async def parse(self, fixture):
         parser = ANSAParser()
         with open(os.path.join(os.path.dirname(__file__), fixture)) as f:
             xml = etree.fromstring(f.read().encode("utf-8"))
-            return parser.parse(xml)[0]
+            return (await parser.parse(xml))[0]
 
-    def test_parse_item(self):
+    async def test_parse_item(self):
         init_subjects(self.app)
-        item = self.parse("item.xml")
+        item = await self.parse("item.xml")
         self.assertEqual("De Magistris, rafforzamento forze ordine e strutture dello Stato", item["extra"]["subtitle"])
         self.assertGreater(item["word_count"], 0)
         self.assertEqual([{"qcode": "chronicle", "name": "Chronicle"}], item.get("anpa_category"))
@@ -32,8 +32,8 @@ class ANSAParserTestCase(TestCase):
         extra = item.get("extra", {})
         self.assertEqual("Napoli", extra["city"])
 
-    def test_parse_semantics(self):
-        item = self.parse("semantics.xml")
+    async def test_parse_semantics(self):
+        item = await self.parse("semantics.xml")
         self.assertRegex(item["description_text"], r"ANSA/GIUSEPPE LAMI$")
         self.assertGreaterEqual(len(item["subject"]), 3)
         self.assertIn({"name": "Religious Leader", "qcode": "12015000"}, item["subject"])
@@ -42,18 +42,18 @@ class ANSAParserTestCase(TestCase):
         self.assertIn("iptcDomains", item["semantics"])
         self.assertIn("Religious Leader", item["semantics"]["iptcDomains"])
 
-    def test_parse_semantics_error(self):
-        item = self.parse("semantics_wrong_json.xml")
+    async def test_parse_semantics_error(self):
+        item = await self.parse("semantics_wrong_json.xml")
         self.assertIsNotNone(item)
 
-    def test_parse_image_rights(self):
-        item = self.parse("semantics.xml")
+    async def test_parse_image_rights(self):
+        item = await self.parse("semantics.xml")
         self.assertEqual("ANSA", item["creditline"])
         self.assertEqual("ANSA", item["copyrightholder"])
         self.assertIn("ANSA", item["copyrightnotice"])
         self.assertEqual("Not for use outside Italy", item["usageterms"])
 
-    def test_populate_rights(self):
+    async def test_populate_rights(self):
         self.app.data.insert(
             "vocabularies",
             [
@@ -70,16 +70,16 @@ class ANSAParserTestCase(TestCase):
                 }
             ],
         )
-        item = self.parse("semantics_missing_rights_info.xml")
+        item = await self.parse("semantics_missing_rights_info.xml")
         self.assertEqual("ANSA", item["copyrightholder"])
         self.assertEqual("ANSA notice", item["copyrightnotice"])
         self.assertEqual("ANSA usage", item["usageterms"])
 
-    def test_located(self):
+    async def test_located(self):
         with requests_mock.mock() as mock:
             with open(os.path.join(os.path.dirname(__file__), "geonames.json"), mode="rb") as data:
                 mock.get(GEONAMES_URL, content=data.read())
-            item = self.parse("located.xml")
+            item = await self.parse("located.xml")
         dateline = item["dateline"]
         located = dateline["located"]
         self.assertEqual("Napoli", located["city"])
@@ -89,8 +89,8 @@ class ANSAParserTestCase(TestCase):
         self.assertIn("tz", located)
         self.assertIsNotNone(timezone(located["tz"]))
 
-    def test_photo(self):
-        item = self.parse("photo.xml")
+    async def test_photo(self):
+        item = await self.parse("photo.xml")
         self.assertIn({"name": "CLJ", "qcode": "CLJ", "scheme": "PhotoCategories"}, item["subject"])
         photo_subjects = [s for s in item["subject"] if s.get("qcode") == "CLJ"]
         self.assertEqual(1, len(photo_subjects))
@@ -103,8 +103,8 @@ class ANSAParserTestCase(TestCase):
         self.assertEqual("ANSA", extra["supplier"])
         self.assertEqual("sp/lrc", extra["Digitatore"])
 
-    def test_culture(self):
-        item = self.parse("culture.xml")
+    async def test_culture(self):
+        item = await self.parse("culture.xml")
 
         self.assertIn("(ANSA) - ROMA, 1 LUG - TEST FROM XAWES", item["body_html"])
 
@@ -114,8 +114,8 @@ class ANSAParserTestCase(TestCase):
         self.assertIn("fashion", item["keywords"])
         self.assertEqual("VR-BAR", item["sign_off"])
 
-    def test_image_association(self):
-        item = self.parse("culture.xml")
+    async def test_image_association(self):
+        item = await self.parse("culture.xml")
         self.assertIn("featuremedia", item.get("associations"))
         self.assertEqual(
             {
