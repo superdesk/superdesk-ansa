@@ -3,8 +3,8 @@
     "license": "AGPL-3.0",
     "dependencies": {
         "node-polyfill-webpack-plugin": "^4.1.0",
-        "superdesk-core": "github:superdesk/superdesk-client-core#develop",
-        "superdesk-planning": "github:superdesk/superdesk-planning#develop"
+        "superdesk-core": "github:superdesk/superdesk-client-core#release/3.6",
+        "superdesk-planning": "github:superdesk/superdesk-planning#release/3.6"
     },
     "scripts": {
         "build": "npx @superdesk/build-tools build-root-repo ./",
@@ -17,6 +17,6 @@
         "typescript": "5.9.3"
     },
     "volta": {
-        "node": "22.14.0"
+        "node": "22.23.2"
     }
 }
