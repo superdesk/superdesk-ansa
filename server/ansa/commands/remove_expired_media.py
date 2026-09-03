@@ -19,10 +19,7 @@ def remove_expired_media_command(days, skip, limit, dry):
     stop = now - timedelta(days=days)
     legal = superdesk.get_resource_service("legal_archive")
     cursor = (
-        legal.get_from_mongo(req=None, lookup={"versioncreated": {"$lte": stop}})
-        .sort("_id")
-        .skip(skip)
-        .limit(limit)
+        legal.get_from_mongo(req=None, lookup={"versioncreated": {"$lte": stop}}).sort("_id").skip(skip).limit(limit)
     )
 
     archived_service = superdesk.get_resource_service("archived")
