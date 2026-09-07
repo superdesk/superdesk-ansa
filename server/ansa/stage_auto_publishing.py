@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import cerberus
 import superdesk
@@ -10,13 +11,24 @@ AUTO_PUBLISH_FIELD = "auto_publish"
 
 logger = logging.getLogger(__name__)
 
+# keep references to background tasks so they aren't garbage-collected mid-execution
+_background_tasks: set[asyncio.Task] = set()
+
+
+def _schedule(item):
+    task = asyncio.get_event_loop().create_task(publish_item_on_auto_publish_stage(item))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
+
 
 def item_fetched_handler(sender, item, **kwargs):
-    publish_item_on_auto_publish_stage(item)
+    # item:fetched is a sync signal, so the async publishing is scheduled on the running loop
+    _schedule(item)
 
 
 def item_moved_handler(sender, item, **kwargs):
-    publish_item_on_auto_publish_stage(item)
+    # item:moved is a sync signal, so the async publishing is scheduled on the running loop
+    _schedule(item)
 
 
 def unlink_update_on_auto_publish(item, updates):
@@ -42,7 +54,7 @@ def unlink_update_on_auto_publish(item, updates):
             superdesk.get_resource_service("archive").system_update(main["_id"], {"rewritten_by": None}, main)
 
 
-def publish_item_on_auto_publish_stage(item):
+async def publish_item_on_auto_publish_stage(item):
     stage_id = item.get("task", {}).get("stage")
     if not stage_id:
         return
@@ -63,9 +75,9 @@ def publish_item_on_auto_publish_stage(item):
                 updates["associations"] = associations
 
             if stage.get("incoming_macro"):
-                superdesk.get_resource_service("macros").execute_macro(updates, stage["incoming_macro"])
+                await superdesk.get_resource_service("macros").execute_macro(updates, stage["incoming_macro"])
 
-            superdesk.get_resource_service("archive_publish").patch(item[ID_FIELD], updates)
+            await superdesk.get_resource_service("archive_publish").patch_async(item[ID_FIELD], updates)
         except cerberus.cerberus.ValidationError as err:
             logger.exception(
                 "item was not auto published item=%s stage=%s error=%s",
