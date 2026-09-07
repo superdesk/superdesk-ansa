@@ -13,7 +13,7 @@ from superdesk.resource_fields import ID_FIELD
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 
 
-def auto_publish(item, **kwargs):
+async def auto_publish(item, **kwargs):
     """
     Publish the passed item. The macro must be called as an on stage macro as publishing an item that is in transit
     i.e. an incoming or outgoing macro will fail.
@@ -21,7 +21,7 @@ def auto_publish(item, **kwargs):
     :param kwargs:
     :return:
     """
-    get_resource_service("archive_publish").patch(
+    await get_resource_service("archive_publish").patch_async(
         id=item[ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, "auto_publish": True}
     )
     return item
