@@ -69,6 +69,10 @@ if env("REDIS_PORT"):
     REDIS_URL = env("REDIS_PORT").replace("tcp:", "redis:")
 BROKER_URL = env("CELERY_BROKER_URL", REDIS_URL)
 
+# superdesk-core 3.6 media uploads wait on celery task results,
+# which are only stored by the async worker runtime
+CELERY_USE_ASYNC_WORKER = strtobool(env("CELERY_USE_ASYNC_WORKER", "true"))
+
 SECRET_KEY = env("SECRET_KEY", "")
 
 # Highcharts Export Server - default settings
