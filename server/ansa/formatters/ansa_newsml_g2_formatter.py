@@ -165,6 +165,7 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
             SubElement(content_meta, "description", {"role": "drol:altText"}).text = article["alt_text"]
 
     def _format_extra(self, article, content_meta):
+        """Format extra metadata with non-empty, trimmed, unique contributor names per role."""
         extra = article.get("extra", {})
 
         if extra.get("subtitle"):
@@ -186,9 +187,17 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
             ).text = get_text(extra["shorttitle"])
 
         for field, role in CONTRIBUTOR_MAPPING.items():
-            if extra.get(field):
+            value = extra.get(field)
+            names = value if isinstance(value, list) else [value]
+            seen = set()
+            for name in names:
+                if isinstance(name, (str, bytes)):
+                    name = name.strip()
+                if not name or name in seen:
+                    continue
+                seen.add(name)
                 elem = SubElement(content_meta, "contributor", {"role": "ctrol:{}".format(role)})
-                SubElement(elem, "name").text = extra[field]
+                SubElement(elem, "name").text = name
 
     def _format_sms(self, article, content_meta):
         if article.get("sms_message"):

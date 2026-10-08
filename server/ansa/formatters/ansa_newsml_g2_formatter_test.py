@@ -1,8 +1,10 @@
 import io
 import settings
 
+from datetime import datetime, timezone
 from lxml import etree
 from unittest import mock
+from unittest import TestCase as UnitTestCase
 from urllib.parse import urlparse
 from eve.versioning import insert_versioning_documents
 
@@ -33,6 +35,89 @@ def ns(value):
 
 def get_content_meta(xml):
     return xml.find("/".join([ns("itemSet"), ns("newsItem"), ns("contentMeta")]))
+
+
+class ANSANewsmlG2ExtraFormatterTestCase(UnitTestCase):
+    def test_actual_picture_extra_payload(self):
+        extra = {
+            "city": "Paris",
+            "nation": "France",
+            "coauthor": ["STF", "STF"],
+            "supplier": "AFP",
+            "DateCreated": datetime(2026, 10, 6, 9, 56, 1, tzinfo=timezone.utc),
+            "DateRelease": datetime(2026, 10, 7, 5, 22, 26, tzinfo=timezone.utc),
+        }
+        for formatter_class in (ANSAPlainTextNewsMLG2Formatter, ANSAHTMLNewsMLG2Formatter):
+            with self.subTest(formatter=formatter_class.name):
+                content_meta = etree.Element("contentMeta")
+
+                formatter_class()._format_extra({"extra": extra}, content_meta)
+
+                contributors = content_meta.findall("contributor")
+                self.assertEqual(["STF", "AFP"], [elem.find("name").text for elem in contributors])
+                self.assertEqual(
+                    ["ctrol:coAuthor", "ctrol:supplier"],
+                    [elem.get("role") for elem in contributors],
+                )
+
+    def test_empty_contributor(self):
+        for field in ("digitator", "coauthor", "supplier"):
+            for value in (None, "", " \t\n ", b"", b" \t\n ", []):
+                with self.subTest(field=field, value=value):
+                    content_meta = etree.Element("contentMeta")
+
+                    ANSAPlainTextNewsMLG2Formatter()._format_extra({"extra": {field: value}}, content_meta)
+
+                    self.assertEqual([], content_meta.findall("contributor"))
+
+    def test_same_name_in_different_roles(self):
+        content_meta = etree.Element("contentMeta")
+        extra = {"coauthor": ["AFP", "AFP"], "supplier": "AFP"}
+
+        ANSAPlainTextNewsMLG2Formatter()._format_extra({"extra": extra}, content_meta)
+
+        contributors = content_meta.findall("contributor")
+        self.assertEqual(["AFP", "AFP"], [elem.find("name").text for elem in contributors])
+        self.assertEqual(["ctrol:coAuthor", "ctrol:supplier"], [elem.get("role") for elem in contributors])
+
+    def test_scalar_contributor(self):
+        extra = {"city": "Paris", "coauthor": None, "nation": "France", "supplier": "AFP"}
+        content_meta = etree.Element("contentMeta")
+
+        ANSAPlainTextNewsMLG2Formatter()._format_extra({"extra": extra}, content_meta)
+
+        contributors = content_meta.findall("contributor")
+        self.assertEqual(1, len(contributors))
+        self.assertEqual("ctrol:supplier", contributors[0].get("role"))
+        self.assertEqual("AFP", contributors[0].find("name").text)
+
+    def test_list_contributor(self):
+        for field, role in (
+            ("digitator", "descrWriter"),
+            ("coauthor", "coAuthor"),
+            ("supplier", "supplier"),
+        ):
+            for formatter_class in (ANSAPlainTextNewsMLG2Formatter, ANSAHTMLNewsMLG2Formatter):
+                for names, expected_names in (
+                    (["AFP"], ["AFP"]),
+                    (["AFP", "ANSA"], ["AFP", "ANSA"]),
+                    (["AFP", "ANSA", "AFP", "ANSA"], ["AFP", "ANSA"]),
+                    ([None, "", "AFP"], ["AFP"]),
+                    ([None, "", " \t\n ", " STF ", "STF", " AFP "], ["STF", "AFP"]),
+                    ([None, "", " \t\n "], []),
+                    ([], []),
+                ):
+                    with self.subTest(field=field, formatter=formatter_class.name, names=names):
+                        content_meta = etree.Element("contentMeta")
+
+                        formatter_class()._format_extra({"extra": {field: names}}, content_meta)
+
+                        contributors = content_meta.findall("contributor")
+                        self.assertEqual(expected_names, [elem.find("name").text for elem in contributors])
+                        self.assertEqual(
+                            ["ctrol:{}".format(role)] * len(expected_names),
+                            [elem.get("role") for elem in contributors],
+                        )
 
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
