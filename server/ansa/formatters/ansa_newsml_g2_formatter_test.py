@@ -346,6 +346,32 @@ class ANSANewsmlG2FormatterTestCase(TestCase):
         self.assertEqual("SMS message", headlines[3].text)
         self.assertEqual("This is a test headline", headlines[4].text)
 
+    def test_headline_none(self):
+        content_meta = self.format_content_meta({"headline": None})
+        headlines = content_meta.findall(ns("headline"))
+        self.assertEqual(5, len(headlines))
+        self.assertEqual("", headlines[-1].text or "")
+
+    def test_headline_formatting(self):
+        cases = [
+            ({}, ""),
+            ({"headline": None}, ""),
+            ({"headline": "", "priority": 2}, ""),
+            ({"headline": " \n\t "}, ""),
+            ({"headline": "  Test headline  "}, "Test headline"),
+            ({"headline": "  ++ Test headline  ", "priority": 2}, "++ Test headline ++"),
+            ({"headline": "  +++ Test headline  ", "priority": 2}, "+++ Test headline"),
+            ({"headline": "  ++ Test headline  ", "priority": 4}, "++ Test headline"),
+        ]
+        for formatter in (ANSAPlainTextNewsMLG2Formatter(), ANSAHTMLNewsMLG2Formatter()):
+            for article, expected in cases:
+                with self.subTest(formatter=formatter.name, article=article):
+                    content_meta = etree.Element("contentMeta")
+                    formatter._format_headline(article, content_meta)
+                    headlines = content_meta.findall("headline")
+                    self.assertEqual(1, len(headlines))
+                    self.assertEqual(expected, headlines[0].text)
+
     def format_content_meta(self, updates=None):
         article = self.get_article(updates)
         xml = self.format(article)

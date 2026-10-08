@@ -149,7 +149,7 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
         :param dict article:
         :param Element content_meta:
         """
-        hl = article.get("headline", "").strip()
+        hl = (article.get("headline") or "").strip()
         p = article.get("priority", 4)
         if p == 2 and "+++" not in hl and "++" in hl:
             hl = "++ {} ++".format(hl.replace("++", "").strip())
