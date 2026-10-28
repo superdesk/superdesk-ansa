@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "ansa.parser",
     "ansa.subjects",
     "ansa.formatters",
+    "ansa.transmitters",
     "ansa.routing",
     "ansa.stage_auto_publishing",
     "ansa.move_picture_to_desk",
