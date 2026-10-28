@@ -226,8 +226,20 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
                 SubElement(contrib, "name").text = author.get("sub_label")
 
     def _format_creator(self, article, content_meta):
-        if article.get("byline"):
-            SubElement(content_meta, "by").text = article["byline"]
+        byline = article.get("byline")
+        if isinstance(byline, list):
+            # IPTC By-line is repeatable
+            names = []
+            for name in byline:
+                if isinstance(name, bytes):
+                    name = name.decode("utf-8", "replace")
+                if isinstance(name, str):
+                    name = name.strip()
+                if name and str(name) not in names:
+                    names.append(str(name))
+            byline = "/".join(names)
+        if byline:
+            SubElement(content_meta, "by").text = byline
 
     def _format_sign_off_sd(self, article, content_meta):
         if article.get("sign_off"):
@@ -542,7 +554,7 @@ class ANSAPlainTextNewsMLG2Formatter(NewsMLG2Formatter):
 
     def _format_place(self, article, content_meta):
         super()._format_place(article, content_meta)
-        for place in article.get("place", []):
+        for place in article.get("place") or []:
             if len(place.keys()) == 2 and place.get("name") and place.get("qcode"):  # suggested places from semantics
                 self._create_subject_element(content_meta, place["name"], place["qcode"], "cpnat:geoArea")
 
