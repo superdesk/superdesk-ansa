@@ -87,6 +87,27 @@ class AnsaPictureTestCase(unittest.TestCase):
         set_default_search_operator(params)
         self.assertEqual('foo AND "juventus turin" AND bar', params["searchtext"])
 
+    def test_default_search_operator_tokens(self):
+        cases = {
+            "dell'acqua roma": "dell'acqua AND roma",
+            "dell\u2019acqua roma": "dell'acqua AND roma",
+            "\u201cjuventus turin\u201d bar": '"juventus turin" AND bar',
+            "covid-19, vaccino": "covid AND 19 AND vaccino",
+            "ORBAN budapest": "ORBAN AND budapest",
+            "MORANDI ponte": "MORANDI AND ponte",
+            "foo or bar": "foo or bar",
+            "foo and bar": "foo and bar",
+            "...": "...",
+        }
+        for text, expected in cases.items():
+            params = {"searchtext": text}
+            set_default_search_operator(params)
+            self.assertEqual(expected, params["searchtext"], text)
+
+        params = {}
+        set_default_search_operator(params)
+        self.assertEqual({}, params)
+
     @patch("superdesk.get_resource_service")
     @patch("ansa.search.update_renditions")
     def test_fetch(self, update_renditions_mock, get_service_mock):

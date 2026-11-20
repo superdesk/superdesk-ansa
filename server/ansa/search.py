@@ -134,10 +134,24 @@ def local_date(delta):
     now = utcnow()
     return utc_to_local(TZ, now + delta).strftime(DATE_FORMAT)
 
+
+# typographic apostrophes and quotes (copy and paste) are searched as the plain ones
+SEARCH_TEXT_QUOTES = str.maketrans({"\u2018": "'", "\u2019": "'", "\u02bc": "'", "\u201c": '"', "\u201d": '"'})
+SEARCH_OPERATOR_RE = re.compile(r"\b(OR|AND)\b", re.IGNORECASE)
+# a quoted phrase, or a word which can contain apostrophes (dell'acqua)
+SEARCH_TOKEN_RE = re.compile(r'"[^"]+"|\w+(?:\'\w+)*')
+
+
 def set_default_search_operator(params):
+    """Join search terms with AND unless the user wrote the operators."""
     text = params.get("searchtext")
-    if text and not re.search(r'\b(OR|AND)\b', text, re.IGNORECASE):
-        tokens = re.findall(r'"[^"]+"|\w+(?:\'\w+)*', text)
+    if not text:
+        return
+    text = text.translate(SEARCH_TEXT_QUOTES)
+    if SEARCH_OPERATOR_RE.search(text):
+        return
+    tokens = SEARCH_TOKEN_RE.findall(text)
+    if tokens:
         params["searchtext"] = " AND ".join(tokens)
 
 
