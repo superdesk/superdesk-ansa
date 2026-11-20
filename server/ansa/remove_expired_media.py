@@ -8,10 +8,28 @@ logger = logging.getLogger(__name__)
 
 
 def populate_renditions(renditions, item):
-    if item.get("renditions"):
-        for key, val in item["renditions"].items():
-            if key != "viewImage" and val and val.get("media"):
-                renditions.append(val)
+    """Collect removable media and return the view-image IDs kept for the legal archive."""
+    rendition_sets = [item.get("renditions") or {}]
+    rendition_sets.extend(
+        association["renditions"]
+        for association in (item.get("associations") or {}).values()
+        if association and association.get("renditions")
+    )
+    kept_media = {
+        str(item_renditions["viewImage"]["media"])
+        for item_renditions in rendition_sets
+        if item_renditions.get("viewImage") and item_renditions["viewImage"].get("media")
+    }
+
+    seen_media = kept_media.copy()
+    for item_renditions in rendition_sets:
+        for rendition in item_renditions.values():
+            if rendition and rendition.get("media"):
+                media_id = str(rendition["media"])
+                if media_id not in seen_media:
+                    seen_media.add(media_id)
+                    renditions.append({"media": media_id})
+    return kept_media
 
 
 def remove_expired_media(archived_service, item, dry=False, **kwargs):
@@ -19,40 +37,49 @@ def remove_expired_media(archived_service, item, dry=False, **kwargs):
     if other is not None:
         logger.info("Skip removing media for item %s", item["item_id"])
         return
+    production_item = get_resource_service("archive").find_one(req=None, _id=item["item_id"])
+    if production_item is not None:
+        logger.info("Keeping media for item %s still available in production", item["item_id"])
+        return
     renditions = []
-    populate_renditions(renditions, item)
+    kept_media = populate_renditions(renditions, item)
     if renditions and not dry:
         logger.info("Removing %d media files for item %s", len(renditions), item.get("guid"))
     elif not dry:
         logger.info("No media to be removed for item %s", item.get("guid"))
 
-    # remove media references for the item
-    get_resource_service("media_references").delete_action(
-        lookup={
-            "item_id": item["item_id"],
-        }
-    )
+    media_references = get_resource_service("media_references")
+    if not dry:
+        media_references.delete_action(
+            lookup={
+                "item_id": item["item_id"],
+                "media_id": {"$nin": list(kept_media)},
+            }
+        )
 
     for rend in renditions:
         try:
-            if not dry:
-                references = get_resource_service("media_references").get(
-                    req=None,
-                    lookup={
-                        "media_id": str(rend["media"]),
-                    },
-                )
+            references = media_references.get(
+                req=None,
+                lookup={
+                    "media_id": str(rend["media"]),
+                },
+            )
+            if dry:
+                has_references = any(ref.get("item_id") != item["item_id"] for ref in references)
+            else:
+                has_references = references.count() > 0
 
-                if references.count() == 0:
+            if not has_references:
+                if dry:
+                    print(rend["media"])
+                else:
                     logger.info("removing %s", rend["media"])
                     app.media.delete(str(rend["media"]))
-                else:
-                    logger.info("keeping %s due to references")
             else:
-                print(rend["media"])
+                logger.info("keeping %s due to references", rend["media"])
         except Exception:
             logger.exception("Failed to remove media %s", rend["media"])
-            continue
 
 
 def init_app(_app):

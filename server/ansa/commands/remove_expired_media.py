@@ -27,7 +27,7 @@ class RemoveExpiredMediaCommand(superdesk.Command):
 
         i = 0
         for item in cursor:
-            if item.get("renditions"):
+            if item.get("renditions") or item.get("associations"):
                 i += 1
                 item["item_id"] = item["_id"]
                 remove_expired_media(archived_service, item, dry=dry)
