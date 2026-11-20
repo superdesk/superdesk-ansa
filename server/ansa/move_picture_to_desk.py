@@ -5,6 +5,7 @@ from superdesk import get_resource_service
 from superdesk.signals import item_update, item_moved
 from superdesk.metadata.item import PUBLISH_STATES
 from apps.content import push_content_notification
+from apps.archive.common import get_expiry
 from flask import current_app, request
 
 logger = logging.getLogger(__name__)
@@ -140,6 +141,7 @@ def _set_picture_stage(item, desk_id):
             "stage": stage["_id"],
         }
     )
+    item["expiry"] = get_expiry(desk_id, stage["_id"])
 
 
 def _move_associated_picture(assoc, desk_id):
@@ -172,7 +174,7 @@ def _move_associated_picture(assoc, desk_id):
 
     updated_task = dict(picture.get("task") or {})
     updated_task.update({"desk": desk_id, "stage": stage["_id"]})
-    updates = {"task": updated_task}
+    updates = {"task": updated_task, "expiry": get_expiry(desk_id, stage["_id"])}
     archive_service.system_update(picture_id, updates, picture)
 
     updated = picture.copy()
